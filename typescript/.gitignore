@@ -1,0 +1,108 @@
+# Logs & Reports
+# ---------------------------------
+*.log
+lerna-debug.log*
+logs/
+npm-debug.log*
+.pnpm-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Generated Files
+# ---------------------------------
+._*
+.DS_Store
+.DS_Store?
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dependency Directories
+# ---------------------------------
+bower_components/
+jspm_packages/
+node_modules/
+web_modules/
+
+# Build & Output
+# ---------------------------------
+build/
+dist/
+out/
+
+# Testing & Coverage
+# ---------------------------------
+*.lcov
+.nyc_output/
+coverage/
+lib-cov/
+
+# Cache
+# ---------------------------------
+.cache/
+.docusaurus/
+.eslintcache
+.firebase/
+.fusebox/
+.parcel-cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.stylelintcache
+.svelte-kit/
+.temp/
+**/.vitepress/cache/
+
+# Framework-Specific Output
+# ---------------------------------
+.next/
+.nuxt/
+.vuepress/dist/
+**/.vitepress/dist/
+# Gatsby public directory - uncomment if using Gatsby instead of Next.js
+# public/
+
+# Environment Variables
+# ---------------------------------
+.env
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
+
+# Package Manager & Binaries
+# ---------------------------------
+*.tgz
+.lock-wscript
+.npm
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.yarn-integrity
+bun.lockb
+
+# Tooling
+# ---------------------------------
+.dynamodb/
+.grunt/
+.serverless/
+.tern-port
+.vscode-test/
+
+# Miscellaneous
+# ---------------------------------
+*.pid
+*.pid.lock
+*.seed
+*.tsbuildinfo
+.node_repl_history
+pids/

@@ -1,0 +1,28 @@
+import type { AppConfig } from './types.js';
+
+export const CONFIG: AppConfig = {
+	personalInfo: {
+		name: 'Carlos Ferreyra',
+		title: 'Software Engineer & Developer',
+		company: 'Self Employed',
+		location: 'United States',
+		skills: ['TypeScript', 'React', 'Node.js', 'Python', 'GCP', 'DevOps'],
+	},
+	urls: {
+		email: 'mailto:eduferreyraok@gmail.com',
+		resume: 'https://www.carlosferreyra.me/resume.pdf',
+		portfolio: 'https://www.carlosferreyra.me',
+		github: 'https://github.com/carlosferreyra',
+		linkedin: 'https://linkedin.com/in/eduferreyraok',
+		twitter: 'https://twitter.com/eduferreyraok',
+	},
+	theme: {
+		borderColor: 'cyan',
+		backgroundColor: '#1a1a2e',
+		animationSpeed: {
+			fast: 8,
+			medium: 25,
+			slow: 40,
+		},
+	},
+};
