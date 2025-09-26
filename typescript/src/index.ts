@@ -37,6 +37,7 @@ const main = async (): Promise<void> => {
 				await actionHandlers[action as keyof typeof actionHandlers]();
 			}
 		}
+		process.exit(0);
 	} catch (error) {
 		console.error(chalk.red('\n❌ An error occurred:'), (error as Error).message);
 		process.exit(1);

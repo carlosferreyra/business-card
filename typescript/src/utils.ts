@@ -10,7 +10,7 @@ export const createAnimatedSpinner = async (text: string, duration = 500) => {
 	return spinner;
 };
 
-export const animateText = async (text: string, speed = 10): Promise<void> => {
+export const animateText = async (text: string, speed = 1): Promise<void> => {
 	process.stdout.write('\n');
 	for (const char of text) {
 		process.stdout.write(char);
