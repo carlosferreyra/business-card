@@ -1,0 +1,62 @@
+name: Publish to PyPI and NPM
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  build-and-publish-python:
+    name: Build and publish Python package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up UV
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          version: "latest"
+
+      - name: Build package
+        working-directory: python
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.12.4
+        with:
+          packages-dir: python/dist/
+
+  build-and-publish-npm:
+    name: Build and publish NPM package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Ensure npm 11.5.1+ for trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        working-directory: typescript
+        run: bun install
+
+      - name: Build package
+        working-directory: typescript
+        run: bun run build
+
+      - name: Publish to NPM (using trusted publishing)
+        working-directory: typescript
+        run: bun publish --access public
