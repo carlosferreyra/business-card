@@ -41,19 +41,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Update npm to latest
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         working-directory: typescript
-        run: bun install
+        run: npm ci
 
       - name: Build package
         working-directory: typescript
-        run: bun run build
+        run: npm run build
 
       - name: Publish to NPM (using trusted publishing)
         working-directory: typescript
-        run: bun publish --access public
+        run: npm publish
