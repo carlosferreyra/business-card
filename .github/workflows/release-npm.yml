@@ -1,0 +1,44 @@
+name: Publish to NPM
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+    paths:
+      - 'typescript/**'
+  pull_request:
+    paths:
+      - 'typescript/**'
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  build-and-publish-npm:
+    name: Build and publish NPM package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        working-directory: typescript
+        run: npm ci
+
+      - name: Build package
+        working-directory: typescript
+        run: npm run build
+
+      - name: Publish to NPM (using trusted publishing)
+        working-directory: typescript
+        run: npm publish
+        if: startsWith(github.ref, 'refs/tags/v')
