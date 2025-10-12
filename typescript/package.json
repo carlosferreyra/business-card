@@ -13,13 +13,13 @@
     "README.md",
     "LICENSE"
   ],
-  "homepage": "https://github.com/carlosferreyra/carlosferreyra-cli-ts#readme",
+  "homepage": "https://github.com/carlosferreyra/business-card#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/carlosferreyra/carlosferreyra-cli-ts.git"
+    "url": "git+https://github.com/carlosferreyra/business-card.git"
   },
   "bugs": {
-    "url": "https://github.com/carlosferreyra/carlosferreyra-cli-ts/issues"
+    "url": "https://github.com/carlosferreyra/business-card/issues"
   },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
