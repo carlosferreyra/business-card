@@ -1,0 +1,129 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Business Card Configuration",
+  "description": "Configuration for the CLI business card application",
+  "type": "object",
+  "required": [
+    "personalInfo",
+    "urls",
+    "theme"
+  ],
+  "properties": {
+    "personalInfo": {
+      "type": "object",
+      "required": [
+        "name",
+        "title",
+        "location",
+        "skills"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Your full name"
+        },
+        "title": {
+          "type": "string",
+          "description": "Your professional title"
+        },
+        "company": {
+          "type": "string",
+          "description": "Your current company (optional)"
+        },
+        "location": {
+          "type": "string",
+          "description": "Your location"
+        },
+        "skills": {
+          "type": "array",
+          "description": "List of your skills",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "urls": {
+      "type": "object",
+      "required": [
+        "email",
+        "resume",
+        "portfolio",
+        "github",
+        "linkedin"
+      ],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "uri",
+          "description": "Your email address (mailto: format)"
+        },
+        "resume": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to your resume"
+        },
+        "portfolio": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to your portfolio website"
+        },
+        "github": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to your GitHub profile"
+        },
+        "linkedin": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to your LinkedIn profile"
+        },
+        "twitter": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to your Twitter profile (optional)"
+        }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "required": [
+        "borderColor",
+        "backgroundColor",
+        "animationSpeed"
+      ],
+      "properties": {
+        "borderColor": {
+          "type": "string",
+          "description": "Border color for the card"
+        },
+        "backgroundColor": {
+          "type": "string",
+          "description": "Background color (hex format)"
+        },
+        "animationSpeed": {
+          "type": "object",
+          "required": [
+            "fast",
+            "medium",
+            "slow"
+          ],
+          "properties": {
+            "fast": {
+              "type": "number",
+              "description": "Fast animation speed (milliseconds)"
+            },
+            "medium": {
+              "type": "number",
+              "description": "Medium animation speed (milliseconds)"
+            },
+            "slow": {
+              "type": "number",
+              "description": "Slow animation speed (milliseconds)"
+            }
+          }
+        }
+      }
+    }
+  }
+}

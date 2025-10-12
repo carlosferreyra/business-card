@@ -1,28 +1,34 @@
+import { readFileSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import type { AppConfig } from './types.js';
 
-export const CONFIG: AppConfig = {
-	personalInfo: {
-		name: 'Carlos Ferreyra',
-		title: 'Software Engineer & Developer',
-		company: 'Self Employed',
-		location: 'United States',
-		skills: ['TypeScript', 'React', 'Node.js', 'Python', 'GCP', 'DevOps'],
-	},
-	urls: {
-		email: 'mailto:eduferreyraok@gmail.com',
-		resume: 'https://www.carlosferreyra.me/resume.pdf',
-		portfolio: 'https://www.carlosferreyra.me',
-		github: 'https://github.com/carlosferreyra',
-		linkedin: 'https://linkedin.com/in/eduferreyraok',
-		twitter: 'https://twitter.com/eduferreyraok',
-	},
-	theme: {
-		borderColor: 'cyan',
-		backgroundColor: '#1a1a2e',
-		animationSpeed: {
-			fast: 8,
-			medium: 25,
-			slow: 40,
-		},
-	},
-};
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load configuration from the central config.json file
+function loadConfig(): AppConfig {
+	const possiblePaths = [
+		join(__dirname, 'config.json'), // Bundled with dist (production)
+		join(__dirname, '../config.json'), // One level up from dist
+		join(__dirname, '../../config.json'), // From src in development
+		join(__dirname, '../../../config.json'), // From nested src structure
+	];
+
+	for (const configPath of possiblePaths) {
+		try {
+			const configData = readFileSync(configPath, 'utf-8');
+			return JSON.parse(configData) as AppConfig;
+		} catch (error) {
+			// Continue to next path
+			continue;
+		}
+	}
+
+	throw new Error(
+		'Failed to load configuration file. Please ensure config.json exists.\n' +
+			`Tried paths: ${possiblePaths.join(', ')}`
+	);
+}
+
+export const CONFIG: AppConfig = loadConfig();

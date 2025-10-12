@@ -81,11 +81,11 @@ class PersonalInfo:
 
 ```typescript
 interface PersonalInfo {
-	name: string;
-	title: string;
-	company?: string;
-	location: string;
-	skills: string[];
+ name: string;
+ title: string;
+ company?: string;
+ location: string;
+ skills: string[];
 }
 ```
 
@@ -106,11 +106,11 @@ except Exception as e:
 
 ```typescript
 try {
-	await open(url);
-	spinner.success({ text: 'Success!' });
+ await open(url);
+ spinner.success({ text: 'Success!' });
 } catch (err) {
-	spinner.error({ text: 'Failed' });
-	console.error('Error:', (err as Error).message);
+ spinner.error({ text: 'Failed' });
+ console.error('Error:', (err as Error).message);
 }
 ```
 

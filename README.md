@@ -37,18 +37,77 @@ npx carlosferreyra
 
 ## Project Structure
 
+## Project Structure
+
 ```
 business-card/
-├── python/                 # Python implementation
+├── config.json            # 🎯 Centralized configuration (single source of truth)
+├── config.schema.json     # JSON Schema for validation
+├── CONFIGURATION.md       # Configuration documentation
+├── python/                # Python implementation
 │   ├── src/carlosferreyra/
 │   ├── pyproject.toml
 │   └── README.md
-├── typescript/             # TypeScript implementation
+├── typescript/            # TypeScript implementation
 │   ├── src/
 │   ├── package.json
 │   └── README.md
 └── README.md              # This file
 ```
+
+### Centralized Configuration
+
+Both implementations share a single `config.json` file containing:
+
+- **Personal Information**: Name, title, company, location, skills
+- **URLs**: Email, resume, portfolio, GitHub, LinkedIn, Twitter
+- **Theme**: Colors and animation settings
+
+This ensures consistency across both versions. See [CONFIGURATION.md](CONFIGURATION.md) for details.
+
+## 🔧 Configuration
+
+Both implementations share a **single centralized configuration file** (`config.json`) at the root
+of the repository. This ensures consistency across both Python and TypeScript versions.
+
+The configuration includes:
+
+- **Personal Information**: Name, title, company, location, and skills
+- **URLs**: Email, resume, portfolio, GitHub, LinkedIn, and Twitter links
+- **Theme**: Border color, background color, and animation speeds
+
+To customize the business card for your own use, simply edit `config.json`:
+
+```json
+{
+ "personalInfo": {
+  "name": "Your Name",
+  "title": "Your Title",
+  "company": "Your Company",
+  "location": "Your Location",
+  "skills": ["Skill1", "Skill2", "Skill3"]
+ },
+ "urls": {
+  "email": "mailto:your.email@example.com",
+  "resume": "https://your-resume-url.com",
+  "portfolio": "https://your-portfolio.com",
+  "github": "https://github.com/yourusername",
+  "linkedin": "https://linkedin.com/in/yourusername",
+  "twitter": "https://twitter.com/yourusername"
+ },
+ "theme": {
+  "borderColor": "cyan",
+  "backgroundColor": "#1a1a2e",
+  "animationSpeed": {
+   "fast": 8,
+   "medium": 25,
+   "slow": 40
+  }
+ }
+}
+```
+
+The `config.schema.json` file provides IDE autocompletion and validation support.
 
 ## Implementation Comparison
 

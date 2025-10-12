@@ -1,6 +1,8 @@
 """Configuration for the CLI business card."""
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional
 
 
@@ -37,26 +39,55 @@ class AppConfig:
     theme: ThemeConfig
 
 
+def load_config() -> AppConfig:
+    """Load configuration from the central config.json file."""
+    try:
+        # Try to load from the root of the project (during development)
+        config_path = Path(__file__).parent.parent.parent.parent.parent / "config.json"
+        if not config_path.exists():
+            # Fallback to bundled config
+            config_path = Path(__file__).parent / "config.json"
+
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # Convert animation speed values (JSON uses milliseconds, Python uses seconds)
+        # TypeScript: {fast: 8, medium: 25, slow: 40} ms
+        # Python needs: {fast: 0.008, medium: 0.025, slow: 0.04} seconds
+        animation_speed = {
+            "fast": data["theme"]["animationSpeed"]["fast"] / 1000,
+            "medium": data["theme"]["animationSpeed"]["medium"] / 1000,
+            "slow": data["theme"]["animationSpeed"]["slow"] / 1000,
+        }
+
+        return AppConfig(
+            personal_info=PersonalInfo(
+                name=data["personalInfo"]["name"],
+                title=data["personalInfo"]["title"],
+                company=data["personalInfo"].get("company"),
+                location=data["personalInfo"]["location"],
+                skills=data["personalInfo"]["skills"],
+            ),
+            urls=URLs(
+                email=data["urls"]["email"],
+                resume=data["urls"]["resume"],
+                portfolio=data["urls"]["portfolio"],
+                github=data["urls"]["github"],
+                linkedin=data["urls"]["linkedin"],
+                twitter=data["urls"].get("twitter"),
+            ),
+            theme=ThemeConfig(
+                border_color=data["theme"]["borderColor"],
+                background_color=data["theme"]["backgroundColor"],
+                animation_speed=animation_speed,
+            ),
+        )
+    except (FileNotFoundError, KeyError, json.JSONDecodeError) as e:
+        raise RuntimeError(
+            f"Failed to load configuration file: {e}. "
+            "Please ensure config.json exists and is valid."
+        ) from e
+
+
 # Configuration instance
-CONFIG = AppConfig(
-    personal_info=PersonalInfo(
-        name="Carlos Ferreyra",
-        title="Software Engineer & Developer",
-        company="Self Employed",
-        location="United States",
-        skills=["TypeScript", "React", "Node.js", "Python", "GCP", "DevOps"],
-    ),
-    urls=URLs(
-        email="mailto:eduferreyraok@gmail.com",
-        resume="https://www.carlosferreyra.me/resume.pdf",
-        portfolio="https://www.carlosferreyra.me",
-        github="https://github.com/carlosferreyra",
-        linkedin="https://linkedin.com/in/eduferreyraok",
-        twitter="https://twitter.com/eduferreyraok",
-    ),
-    theme=ThemeConfig(
-        border_color="cyan",
-        background_color="#1a1a2e",
-        animation_speed={"fast": 0.01, "medium": 0.025, "slow": 0.04},
-    ),
-)
+CONFIG = load_config()

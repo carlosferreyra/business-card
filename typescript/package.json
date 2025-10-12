@@ -9,6 +9,7 @@
   },
   "files": [
     "dist/**/*",
+    "config.json",
     "README.md",
     "LICENSE"
   ],
@@ -22,7 +23,7 @@
   },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target node",
+    "build": "bun build src/index.ts --outdir dist --target node && cp ../config.json dist/",
     "start": "bun run dist/index.js",
     "type-check": "tsc --noEmit",
     "prepublishOnly": "bun run build"
