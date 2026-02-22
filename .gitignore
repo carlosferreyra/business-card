@@ -75,3 +75,7 @@ bun.lockb
 *.log
 logs/
 lerna-debug.log*
+
+# Added by cargo
+
+/target

@@ -1,143 +1,84 @@
 # Interactive CLI Business Card
 
-A modern, interactive CLI business card available in both **Python** and **TypeScript**
-implementations. Choose your preferred runtime and package manager!
+A fast, interactive CLI business card implemented in Rust.
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)
-![uvx](https://img.shields.io/badge/uvx-compatible-green.svg)
-![npx](https://img.shields.io/badge/npx-compatible-green.svg)
+![Rust](https://img.shields.io/badge/Rust-2024-orange.svg)
+![uvx](https://img.shields.io/badge/uvx-entrypoint-green.svg)
+![bunx](https://img.shields.io/badge/bunx-entrypoint-green.svg)
 
 ## 🚀 Quick Start
 
-### Python Version (uvx)
+### Cargo (direct Rust install)
+
+```bash
+cargo install carlosferreyra
+carlosferreyra
+```
+
+### uvx (wrapper entrypoint)
 
 ```bash
 uvx carlosferreyra
 ```
 
-### TypeScript Version (npx)
+### bunx (wrapper entrypoint)
 
 ```bash
-npx carlosferreyra
+bunx carlosferreyra
 ```
 
 ## Features
 
-- 🎨 Beautiful terminal formatting with animations
+- ⚡ Fast Rust CLI
 - 📧 Direct email contact
-- 📥 Quick resume access
-- 🌐 Portfolio website access
-- 💻 Professional links (GitHub, LinkedIn, Twitter)
-- ⚡ Fast and responsive interface
-- 🖥️ Interactive CLI menu
-- 🚀 ASCII art banner
-- 📦 Zero-install execution
+- 🌐 Portfolio and social links
+- 🖥️ Interactive menu
+- 🔧 Non-interactive mode via `--open`
+- 🎯 Config-driven behavior from a single `config.json`
 
 ## Project Structure
 
-## Project Structure
-
-```
+```text
 business-card/
-├── config.json            # 🎯 Centralized configuration (single source of truth)
-├── config.schema.json     # JSON Schema for validation
-├── CONFIGURATION.md       # Configuration documentation
-├── python/                # Python implementation
-│   ├── src/carlosferreyra/
-│   ├── pyproject.toml
-│   └── README.md
-├── typescript/            # TypeScript implementation
-│   ├── src/
-│   ├── package.json
-│   └── README.md
-└── README.md              # This file
+├── src/                  # Rust source code
+│   └── main.rs
+├── Cargo.toml            # Rust package manifest
+├── Cargo.lock
+├── config.json           # Centralized configuration
+├── config.schema.json    # JSON Schema validation
+├── CONFIGURATION.md      # Configuration docs
+└── README.md
 ```
 
-### Centralized Configuration
+## Configuration
 
-Both implementations share a single `config.json` file containing:
+The CLI reads settings from root `config.json`:
 
-- **Personal Information**: Name, title, company, location, skills
-- **URLs**: Email, resume, portfolio, GitHub, LinkedIn, Twitter
-- **Theme**: Colors and animation settings
+- Personal information (name, title, company, location, skills)
+- URLs (email, resume, portfolio, github, linkedin, twitter)
+- Theme settings
 
-This ensures consistency across both versions. See [CONFIGURATION.md](CONFIGURATION.md) for details.
+For full configuration details, see [CONFIGURATION.md](CONFIGURATION.md).
 
-## 🔧 Configuration
+## Distribution Model
 
-Both implementations share a **single centralized configuration file** (`config.json`) at the root
-of the repository. This ensures consistency across both Python and TypeScript versions.
+- **Source code in this repo:** Rust only
+- **`uvx carlosferreyra`:** Python ecosystem entrypoint wrapper (generated/published in release
+  pipeline)
+- **`bunx carlosferreyra`:** Node ecosystem entrypoint wrapper (generated/published in release
+  pipeline)
 
-The configuration includes:
-
-- **Personal Information**: Name, title, company, location, and skills
-- **URLs**: Email, resume, portfolio, GitHub, LinkedIn, and Twitter links
-- **Theme**: Border color, background color, and animation speeds
-
-To customize the business card for your own use, simply edit `config.json`:
-
-```json
-{
-	"personalInfo": {
-		"name": "Your Name",
-		"title": "Your Title",
-		"company": "Your Company",
-		"location": "Your Location",
-		"skills": ["Skill1", "Skill2", "Skill3"]
-	},
-	"urls": {
-		"email": "mailto:your.email@example.com",
-		"resume": "https://your-resume-url.com",
-		"portfolio": "https://your-portfolio.com",
-		"github": "https://github.com/yourusername",
-		"linkedin": "https://linkedin.com/in/yourusername",
-		"twitter": "https://twitter.com/yourusername"
-	},
-	"theme": {
-		"borderColor": "cyan",
-		"backgroundColor": "#1a1a2e",
-		"animationSpeed": {
-			"fast": 8,
-			"medium": 25,
-			"slow": 40
-		}
-	}
-}
-```
-
-The `config.schema.json` file provides IDE autocompletion and validation support.
-
-## Implementation Comparison
-
-| Feature         | Python (uvx)         | TypeScript (npx)     |
-| --------------- | -------------------- | -------------------- |
-| Runtime         | Python 3.13+         | Node.js 18+          |
-| Package Manager | PyPI (uv/pip)        | npm                  |
-| Execution       | `uvx carlosferreyra` | `npx carlosferreyra` |
-| Terminal UI     | Rich                 | Chalk + Boxen        |
-| ASCII Art       | PyFiglet             | Figlet               |
-| Animations      | Rich Spinner         | Nanospinner          |
-| Gradients       | Rich Styles          | Gradient-string      |
-| Menus           | Inquirer (Python)    | Inquirer (JS)        |
+The `uvx` and `bunx` packages are distribution entrypoints, not source implementations in this
+repository.
 
 ## Development
 
-### Python Version
-
 ```bash
-cd python/
-uv sync
-uv run python -m carlosferreyra
-```
-
-### TypeScript Version
-
-```bash
-cd typescript/
-bun install
-bun run dev
+cargo run
+cargo run -- --open portfolio
+cargo check
+cargo build --release
 ```
 
 ## Connect with Carlos
@@ -149,4 +90,4 @@ bun run dev
 
 ## License
 
-MIT License - see individual implementations for details.
+MIT

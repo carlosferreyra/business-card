@@ -23,7 +23,7 @@ bun run dev  # or npm run dev
 
 ## Testing Both Versions
 
-### Test Python version locally:
+### Test Python version locally
 
 ```bash
 cd python/
@@ -31,7 +31,7 @@ uv build
 uvx --from ./dist/carlosferreyra-*.whl carlosferreyra
 ```
 
-### Test TypeScript version locally:
+### Test TypeScript version locally
 
 ```bash
 cd typescript/

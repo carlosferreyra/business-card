@@ -1,0 +1,32 @@
+[package]
+  name        = "carlosferreyra"
+  version     = "0.1.0"
+  edition     = "2024"
+  authors     = ["Carlos Ferreyra <eduferreyraok@gmail.com>"]
+  description = "Interactive CLI business card - fast Rust implementation"
+  license     = "MIT"
+  repository  = "https://github.com/carlosferreyra/business-card"
+  homepage    = "https://github.com/carlosferreyra/business-card#readme"
+  readme      = "README.md"
+  keywords    = ["cli", "business-card", "portfolio", "interactive"]
+  categories  = ["command-line-utilities"]
+
+[[bin]]
+  name = "carlosferreyra"
+  path = "src/main.rs"
+
+[dependencies]
+  anyhow     = "1.0"
+  clap       = { version = "4.5", features = ["derive"] }
+  inquire    = "0.7"
+  open       = "5.3"
+  serde      = { version = "1.0", features = ["derive"] }
+  serde_json = "1.0"
+
+[package.metadata.release]
+  tag-name                   = "v{{version}}"
+  pre-release-commit-message = "chore(release): {{crate_name}} v{{version}}"
+  publish                    = true
+  push                       = true
+  sign-commit                = false
+  sign-tag                   = false
