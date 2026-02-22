@@ -4,7 +4,7 @@ import webbrowser
 
 from rich.console import Console
 
-from .config import CONFIG
+from .config import CONFIG, is_configured_url
 from .utils import animate_text, animated_spinner
 
 console = Console()
@@ -26,6 +26,10 @@ class ActionHandlers:
     @staticmethod
     def email():
         """Open email client."""
+        if not is_configured_url(CONFIG.urls.email):
+            console.print("[yellow]📧 Email is currently unavailable[/yellow]")
+            return
+
         with animated_spinner("Opening mail client..."):
             success = open_url(CONFIG.urls.email)
 
@@ -38,6 +42,10 @@ class ActionHandlers:
     @staticmethod
     def view_resume():
         """Open resume in browser."""
+        if not is_configured_url(CONFIG.urls.resume):
+            console.print("[yellow]📄 Resume is currently unavailable[/yellow]")
+            return
+
         with animated_spinner("Preparing to open resume..."):
             success = open_url(CONFIG.urls.resume)
 
@@ -50,6 +58,10 @@ class ActionHandlers:
     @staticmethod
     def view_portfolio():
         """Open portfolio website."""
+        if not is_configured_url(CONFIG.urls.portfolio):
+            console.print("[yellow]🌐 Portfolio is currently unavailable[/yellow]")
+            return
+
         with animated_spinner("Loading portfolio..."):
             success = open_url(CONFIG.urls.portfolio)
 
@@ -62,6 +74,10 @@ class ActionHandlers:
     @staticmethod
     def view_github():
         """Open GitHub profile."""
+        if not is_configured_url(CONFIG.urls.github):
+            console.print("[yellow]💻 GitHub is currently unavailable[/yellow]")
+            return
+
         with animated_spinner("Opening GitHub..."):
             success = open_url(CONFIG.urls.github)
 
@@ -74,6 +90,10 @@ class ActionHandlers:
     @staticmethod
     def view_linkedin():
         """Open LinkedIn profile."""
+        if not is_configured_url(CONFIG.urls.linkedin):
+            console.print("[yellow]💼 LinkedIn is currently unavailable[/yellow]")
+            return
+
         with animated_spinner("Opening LinkedIn..."):
             success = open_url(CONFIG.urls.linkedin)
 
@@ -86,9 +106,9 @@ class ActionHandlers:
     @staticmethod
     def view_twitter():
         """Open Twitter profile."""
-        if CONFIG.urls.twitter:
+        if is_configured_url(CONFIG.urls.twitter):
             with animated_spinner("Opening Twitter..."):
-                success = open_url(CONFIG.urls.twitter)
+                success = open_url(CONFIG.urls.twitter or "")
 
             if success:
                 console.print("[bright_cyan]🐦 Twitter profile opened![/bright_cyan]")

@@ -50,7 +50,7 @@ Both implementations will:
 ```json
 "urls": {
   "email": "mailto:your.email@example.com",
-  "resume": "https://your-resume-url.com",
+  "resume": "",
   "portfolio": "https://your-portfolio.com",
   "github": "https://github.com/yourusername",
   "linkedin": "https://linkedin.com/in/yourusername",
@@ -59,11 +59,13 @@ Both implementations will:
 ```
 
 - **email**: Use `mailto:` prefix for email links
-- **resume**: Direct link to your resume (PDF recommended)
-- **portfolio**: Your personal website or portfolio
-- **github**: Your GitHub profile URL
-- **linkedin**: Your LinkedIn profile URL
-- **twitter**: Your Twitter/X profile URL (optional)
+- **resume**: Direct link to your resume (PDF recommended), or `""` to hide it
+- **portfolio**: Your personal website or portfolio, or `""` to hide it
+- **github**: Your GitHub profile URL, or `""` to hide it
+- **linkedin**: Your LinkedIn profile URL, or `""` to hide it
+- **twitter**: Your Twitter/X profile URL (optional, can be `""`)
+
+When a URL is empty, both implementations automatically hide that menu option and related card row.
 
 ### Theme
 
@@ -117,7 +119,6 @@ The Python version:
    ```
 
 2. **Validate your changes**:
-
    - The `config.schema.json` provides JSON Schema validation
    - Most IDEs will show errors if the structure is invalid
 
@@ -175,10 +176,10 @@ If animations are too fast or slow, adjust the values in `config.json`.
 The schema requires:
 
 - All `personalInfo` fields except `company`
-- All `urls` fields except `twitter`
 - All `theme` fields
 
-Omitting required fields will cause the application to fail at startup.
+For `urls`, fields can be omitted or set to `""`. Missing/empty URL fields are treated as "not
+configured" and their menu items are hidden.
 
 ## Contributing
 

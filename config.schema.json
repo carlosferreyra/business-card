@@ -45,42 +45,77 @@
     },
     "urls": {
       "type": "object",
-      "required": [
-        "email",
-        "resume",
-        "portfolio",
-        "github",
-        "linkedin"
-      ],
       "properties": {
         "email": {
           "type": "string",
-          "format": "uri",
+          "anyOf": [
+            {
+              "format": "uri"
+            },
+            {
+              "const": ""
+            }
+          ],
           "description": "Your email address (mailto: format)"
         },
         "resume": {
           "type": "string",
-          "format": "uri",
+          "anyOf": [
+            {
+              "format": "uri"
+            },
+            {
+              "const": ""
+            }
+          ],
           "description": "URL to your resume"
         },
         "portfolio": {
           "type": "string",
-          "format": "uri",
+          "anyOf": [
+            {
+              "format": "uri"
+            },
+            {
+              "const": ""
+            }
+          ],
           "description": "URL to your portfolio website"
         },
         "github": {
           "type": "string",
-          "format": "uri",
+          "anyOf": [
+            {
+              "format": "uri"
+            },
+            {
+              "const": ""
+            }
+          ],
           "description": "URL to your GitHub profile"
         },
         "linkedin": {
           "type": "string",
-          "format": "uri",
+          "anyOf": [
+            {
+              "format": "uri"
+            },
+            {
+              "const": ""
+            }
+          ],
           "description": "URL to your LinkedIn profile"
         },
         "twitter": {
           "type": "string",
-          "format": "uri",
+          "anyOf": [
+            {
+              "format": "uri"
+            },
+            {
+              "const": ""
+            }
+          ],
           "description": "URL to your Twitter profile (optional)"
         }
       }

@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
+from urllib.parse import urlparse
 
 
 @dataclass
@@ -37,6 +38,46 @@ class AppConfig:
     personal_info: PersonalInfo
     urls: URLs
     theme: ThemeConfig
+
+
+def normalize_url(url: Optional[str]) -> str:
+    """Normalize optional URL values from config."""
+    return (url or "").strip()
+
+
+def is_configured_url(url: Optional[str]) -> bool:
+    """Check whether a URL value is configured."""
+    return bool(normalize_url(url))
+
+
+def get_display_url(url: str) -> str:
+    """Convert URL into a terminal-friendly display format."""
+    value = normalize_url(url)
+    if not value:
+        return ""
+
+    parsed = urlparse(value)
+    if parsed.scheme and parsed.netloc:
+        path = parsed.path.rstrip("/")
+        return f"{parsed.netloc}{path}"
+
+    return value.replace("https://", "").replace("http://", "").rstrip("/")
+
+
+def get_social_tag(url: str) -> str:
+    """Extract social handle/tag from URL path."""
+    value = normalize_url(url)
+    if not value:
+        return ""
+
+    parsed = urlparse(value)
+    path = parsed.path or ""
+    parts = [part for part in path.split("/") if part]
+    if not parts:
+        return ""
+
+    handle = parts[-1].lstrip("@")
+    return f"@{handle}" if handle else ""
 
 
 def load_config() -> AppConfig:

@@ -1,7 +1,7 @@
 import boxen from 'boxen';
 import chalk from 'chalk';
 import gradient from 'gradient-string';
-import { CONFIG } from './config.js';
+import { CONFIG, getDisplayUrl, getSocialTag, isConfiguredUrl } from './config.js';
 import { sleep } from './utils.js';
 
 export const profileCard = async (): Promise<void> => {
@@ -12,20 +12,18 @@ export const profileCard = async (): Promise<void> => {
 			? `${chalk.white('Working at')} ${gradient.morning(CONFIG.personalInfo.company)}`
 			: '',
 		location: `📍 ${chalk.gray(CONFIG.personalInfo.location)}`,
-		github: `${chalk.white('{')} ${chalk.gray('github.com/')}${chalk.green(
-			'carlosferreyra'
-		)} ${chalk.white('}')}`,
-		linkedin: `${chalk.white('{')} ${chalk.gray('linkedin.com/in/')}${chalk.blue(
-			'carlosferreyra'
-		)} ${chalk.white('}')}`,
-		twitter: CONFIG.personalInfo.name.toLowerCase().includes('carlos')
-			? `${chalk.white('{')} ${chalk.gray('twitter.com/')}${chalk.cyan(
-					'carlosferreyra'
-			  )} ${chalk.white('}')}`
+		github: `${chalk.white('{')} ${chalk.green(getDisplayUrl(CONFIG.urls.github))} ${chalk.white(
+			'}'
+		)}${getSocialTag(CONFIG.urls.github) ? ` ${chalk.gray(getSocialTag(CONFIG.urls.github))}` : ''}`,
+		linkedin: `${chalk.white('{')} ${chalk.blue(getDisplayUrl(CONFIG.urls.linkedin))} ${chalk.white(
+			'}'
+		)}${getSocialTag(CONFIG.urls.linkedin) ? ` ${chalk.gray(getSocialTag(CONFIG.urls.linkedin))}` : ''}`,
+		twitter: isConfiguredUrl(CONFIG.urls.twitter)
+			? `${chalk.white('{')} ${chalk.cyan(getDisplayUrl(CONFIG.urls.twitter || ''))} ${chalk.white(
+					'}'
+				)}${getSocialTag(CONFIG.urls.twitter || '') ? ` ${chalk.gray(getSocialTag(CONFIG.urls.twitter || ''))}` : ''}`
 			: '',
-		web: `${chalk.white('{')} ${chalk.cyan(
-			CONFIG.urls.portfolio.replace('https://', '')
-		)} ${chalk.white('}')}`,
+		web: `${chalk.white('{')} ${chalk.cyan(getDisplayUrl(CONFIG.urls.portfolio))} ${chalk.white('}')}`,
 		npx: `${chalk.red('npx')} ${chalk.white('carlosferreyra')}`,
 		skills: gradient.cristal(CONFIG.personalInfo.skills.join(' | ')),
 	};
@@ -39,10 +37,10 @@ export const profileCard = async (): Promise<void> => {
 		'',
 		`⚡ Skills: ${cardData.skills}`,
 		'',
-		`📦 GitHub:    ${cardData.github}`,
-		`💼 LinkedIn:  ${cardData.linkedin}`,
+		isConfiguredUrl(CONFIG.urls.github) && `📦 GitHub:    ${cardData.github}`,
+		isConfiguredUrl(CONFIG.urls.linkedin) && `💼 LinkedIn:  ${cardData.linkedin}`,
 		cardData.twitter && `🐦 Twitter:   ${cardData.twitter}`,
-		`🌐 Website:   ${cardData.web}`,
+		isConfiguredUrl(CONFIG.urls.portfolio) && `🌐 Website:   ${cardData.web}`,
 		'',
 		`📇 Card:      ${cardData.npx}`,
 		'',

@@ -80,30 +80,30 @@ To customize the business card for your own use, simply edit `config.json`:
 
 ```json
 {
- "personalInfo": {
-  "name": "Your Name",
-  "title": "Your Title",
-  "company": "Your Company",
-  "location": "Your Location",
-  "skills": ["Skill1", "Skill2", "Skill3"]
- },
- "urls": {
-  "email": "mailto:your.email@example.com",
-  "resume": "https://your-resume-url.com",
-  "portfolio": "https://your-portfolio.com",
-  "github": "https://github.com/yourusername",
-  "linkedin": "https://linkedin.com/in/yourusername",
-  "twitter": "https://twitter.com/yourusername"
- },
- "theme": {
-  "borderColor": "cyan",
-  "backgroundColor": "#1a1a2e",
-  "animationSpeed": {
-   "fast": 8,
-   "medium": 25,
-   "slow": 40
-  }
- }
+	"personalInfo": {
+		"name": "Your Name",
+		"title": "Your Title",
+		"company": "Your Company",
+		"location": "Your Location",
+		"skills": ["Skill1", "Skill2", "Skill3"]
+	},
+	"urls": {
+		"email": "mailto:your.email@example.com",
+		"resume": "https://your-resume-url.com",
+		"portfolio": "https://your-portfolio.com",
+		"github": "https://github.com/yourusername",
+		"linkedin": "https://linkedin.com/in/yourusername",
+		"twitter": "https://twitter.com/yourusername"
+	},
+	"theme": {
+		"borderColor": "cyan",
+		"backgroundColor": "#1a1a2e",
+		"animationSpeed": {
+			"fast": 8,
+			"medium": 25,
+			"slow": 40
+		}
+	}
 }
 ```
 
@@ -144,7 +144,7 @@ bun run dev
 
 - **GitHub**: [github.com/carlosferreyra](https://github.com/carlosferreyra)
 - **LinkedIn**: [linkedin.com/in/eduferreyraok](https://linkedin.com/in/eduferreyraok)
-- **Website**: [carlosferreyra.me](https://carlosferreyra.me)
+- **Website**: [carlosferreyra.com.ar](https://carlosferreyra.com.ar)
 - **Email**: [eduferreyraok@gmail.com](mailto:eduferreyraok@gmail.com)
 
 ## License

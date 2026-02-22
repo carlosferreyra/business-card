@@ -32,3 +32,47 @@ function loadConfig(): AppConfig {
 }
 
 export const CONFIG: AppConfig = loadConfig();
+
+export function normalizeConfigUrl(url?: string): string {
+	return (url ?? '').trim();
+}
+
+export function isConfiguredUrl(url?: string): boolean {
+	return normalizeConfigUrl(url).length > 0;
+}
+
+export function getDisplayUrl(url: string): string {
+	const normalized = normalizeConfigUrl(url);
+	if (!normalized) {
+		return '';
+	}
+
+	try {
+		const parsed = new URL(normalized);
+		const path = parsed.pathname.replace(/\/$/, '');
+		return `${parsed.host}${path}`;
+	} catch {
+		return normalized.replace(/^https?:\/\//, '').replace(/\/$/, '');
+	}
+}
+
+export function getSocialTag(url: string): string {
+	const normalized = normalizeConfigUrl(url);
+	if (!normalized) {
+		return '';
+	}
+
+	try {
+		const parsed = new URL(normalized);
+		const segments = parsed.pathname.split('/').filter(Boolean);
+		if (!segments.length) {
+			return '';
+		}
+		const handle = segments[segments.length - 1].replace(/^@/, '');
+		return handle ? `@${handle}` : '';
+	} catch {
+		const segments = normalized.split('/').filter(Boolean);
+		const handle = (segments[segments.length - 1] || '').replace(/^@/, '');
+		return handle ? `@${handle}` : '';
+	}
+}

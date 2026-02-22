@@ -81,7 +81,7 @@ bun run start
 
 To customize this business card for yourself:
 
-1. Update the personal information in `src/config.ts`
+1. Update the centralized configuration in `../config.json`
 2. Modify the theme colors and animation speeds
 3. Add or remove menu options in `src/menu.ts`
 4. Update the action handlers in `src/actions.ts`
@@ -103,9 +103,9 @@ src/
 ## Connect with Carlos
 
 - **GitHub**: [github.com/carlosferreyra](https://github.com/carlosferreyra)
-- **LinkedIn**: [linkedin.com/in/carlosferreyra](https://linkedin.com/in/carlosferreyra)
-- **Website**: [carlosferreyra.dev](https://carlosferreyra.dev)
-- **Email**: [carlos@example.com](mailto:carlos@example.com)
+- **LinkedIn**: [linkedin.com/in/eduferreyraok](https://linkedin.com/in/eduferreyraok)
+- **Website**: [carlosferreyra.com.ar](https://carlosferreyra.com.ar)
+- **Email**: [eduferreyraok@gmail.com](mailto:eduferreyraok@gmail.com)
 
 ## License
 

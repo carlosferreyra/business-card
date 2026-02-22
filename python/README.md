@@ -107,7 +107,7 @@ src/carlosferreyra/
 
 To customize this business card for yourself:
 
-1. Update the personal information in `src/carlosferreyra/config.py`
+1. Update the centralized configuration in `../config.json`
 2. Modify theme colors and animation speeds
 3. Add or remove menu options in `src/carlosferreyra/menu.py`
 4. Update action handlers in `src/carlosferreyra/actions.py`
@@ -128,7 +128,7 @@ tooling:
 
 - **GitHub**: [github.com/carlosferreyra](https://github.com/carlosferreyra)
 - **LinkedIn**: [linkedin.com/in/eduferreyraok](https://linkedin.com/in/eduferreyraok)
-- **Website**: [carlosferreyra.me](https://carlosferreyra.me)
+- **Website**: [carlosferreyra.com.ar](https://carlosferreyra.com.ar)
 - **Email**: [eduferreyraok@gmail.com](mailto:eduferreyraok@gmail.com)
 - **Twitter**: [@eduferreyraok](https://twitter.com/eduferreyraok)
 

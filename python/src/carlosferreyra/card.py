@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from .config import CONFIG
+from .config import CONFIG, get_display_url, get_social_tag, is_configured_url
 
 console = Console()
 
@@ -37,40 +37,53 @@ def create_profile_card() -> None:
     card_lines.extend([skills_text, ""])
 
     # Social links
-    github_text = (
-        Text("📦 GitHub:    ", style="white")
-        + Text("{ ")
-        + Text("github.com/", style="dim")
-        + Text("carlosferreyra", style="bright_green")
-        + Text(" }")
-    )
-    linkedin_text = (
-        Text("💼 LinkedIn:  ", style="white")
-        + Text("{ ")
-        + Text("linkedin.com/in/", style="dim")
-        + Text("carlosferreyra", style="bright_blue")
-        + Text(" }")
-    )
+    if is_configured_url(CONFIG.urls.github):
+        github_url = get_display_url(CONFIG.urls.github)
+        github_tag = get_social_tag(CONFIG.urls.github)
+        github_text = (
+            Text("📦 GitHub:    ", style="white")
+            + Text("{ ")
+            + Text(github_url, style="bright_green")
+            + Text(" }")
+        )
+        if github_tag:
+            github_text += Text(f" {github_tag}", style="dim")
+        card_lines.append(github_text)
 
-    card_lines.extend([github_text, linkedin_text])
+    if is_configured_url(CONFIG.urls.linkedin):
+        linkedin_url = get_display_url(CONFIG.urls.linkedin)
+        linkedin_tag = get_social_tag(CONFIG.urls.linkedin)
+        linkedin_text = (
+            Text("💼 LinkedIn:  ", style="white")
+            + Text("{ ")
+            + Text(linkedin_url, style="bright_blue")
+            + Text(" }")
+        )
+        if linkedin_tag:
+            linkedin_text += Text(f" {linkedin_tag}", style="dim")
+        card_lines.append(linkedin_text)
 
-    if CONFIG.urls.twitter:
+    if is_configured_url(CONFIG.urls.twitter):
+        twitter_url = get_display_url(CONFIG.urls.twitter or "")
+        twitter_tag = get_social_tag(CONFIG.urls.twitter or "")
         twitter_text = (
             Text("🐦 Twitter:   ", style="white")
             + Text("{ ")
-            + Text("twitter.com/", style="dim")
-            + Text("carlosferreyra", style="bright_cyan")
+            + Text(twitter_url, style="bright_cyan")
             + Text(" }")
         )
+        if twitter_tag:
+            twitter_text += Text(f" {twitter_tag}", style="dim")
         card_lines.append(twitter_text)
 
-    web_text = (
-        Text("🌐 Website:   ", style="white")
-        + Text("{ ")
-        + Text(CONFIG.urls.portfolio.replace("https://", ""), style="bright_cyan")
-        + Text(" }")
-    )
-    card_lines.append(web_text)
+    if is_configured_url(CONFIG.urls.portfolio):
+        web_text = (
+            Text("🌐 Website:   ", style="white")
+            + Text("{ ")
+            + Text(get_display_url(CONFIG.urls.portfolio), style="bright_cyan")
+            + Text(" }")
+        )
+        card_lines.append(web_text)
 
     card_lines.append("")
 
