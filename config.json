@@ -1,34 +1,28 @@
 {
-  "$schema": "./config.schema.json",
   "personalInfo": {
     "name": "Carlos Ferreyra",
     "title": "Software Engineer & Developer",
+    "email": "eduferreyraok@gmail.com",
     "company": "Self Employed",
     "location": "United States",
     "skills": [
-      "TypeScript",
-      "React",
-      "Node.js",
+      "Rust",
+      "Wasm",
       "Python",
-      "GCP",
       "DevOps"
     ]
   },
-  "urls": {
-    "email": "mailto:eduferreyraok@gmail.com",
-    "resume": "",
-    "portfolio": "https://carlosferreyra.com.ar",
-    "github": "https://github.com/carlosferreyra",
-    "linkedin": "https://linkedin.com/in/eduferreyraok",
-    "twitter": "https://twitter.com/eduferreyraok"
-  },
-  "theme": {
-    "borderColor": "cyan",
-    "backgroundColor": "#1a1a2e",
-    "animationSpeed": {
-      "fast": 8,
-      "medium": 25,
-      "slow": 40
+  "githubUsername": "carlosferreyra",
+  "links": [
+    {
+      "id": "github",
+      "label": "💻 GitHub",
+      "url": "https://github.com/carlosferreyra"
+    },
+    {
+      "id": "linkedin",
+      "label": "💼 LinkedIn",
+      "url": "https://linkedin.com/in/eduferreyraok"
     }
-  }
+  ]
 }
