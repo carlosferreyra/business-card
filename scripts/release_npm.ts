@@ -4,15 +4,29 @@ import { join } from 'node:path';
 
 class PackageMetadata {
 	constructor(
-		public readonly name: string,
+		public readonly rawName: string,
 		public readonly version: string,
 		public readonly description: string,
 		public readonly repository: string,
 		public readonly license: string
 	) {}
 
+	/**
+	 * NPM and bin scripts must be lowercase to avoid "name cleaned" warnings.
+	 */
+	get safeName(): string {
+		return this.rawName.toLowerCase().replace(/[^a-z0-9-_]/g, '');
+	}
+
+	/**
+	 * Normalizes repository URL to the format NPM prefers.
+	 */
 	get repositoryUrl(): string {
-		return this.repository.endsWith('.git') ? this.repository : `${this.repository}.git`;
+		let url = this.repository;
+		if (url.startsWith('https://github.com/')) {
+			url = `git+${url}`;
+		}
+		return url.endsWith('.git') ? url : `${url}.git`;
 	}
 
 	static async fromCargo(): Promise<PackageMetadata> {
@@ -41,14 +55,16 @@ class PackageMetadata {
 
 const Templates = {
 	packageJson: (meta: PackageMetadata) => ({
-		name: meta.name,
+		name: meta.safeName,
 		version: meta.version,
 		description: meta.description,
 		license: meta.license,
 		type: 'module',
-		bin: { [meta.name]: `./bin/${meta.name}.cjs` },
+		// Key and filename are now lowercased to satisfy NPM
+		bin: { [meta.safeName]: `./bin/${meta.safeName}.cjs` },
 		files: ['bin', 'README.md'],
 		repository: { type: 'git', url: meta.repositoryUrl },
+		homepage: meta.repository,
 		publishConfig: { access: 'public' },
 		engines: { node: '>=18' },
 	}),
@@ -58,7 +74,7 @@ const Templates = {
 import { spawnSync } from "node:child_process";
 import { platform } from "node:os";
 
-const BIN_NAME = "${meta.name}";
+const BIN_NAME = "${meta.rawName}"; // The actual Rust binary name
 const REPOSITORY = "${meta.repository}".replace(/\\/$/, "");
 const VERSION = "${meta.version}";
 
@@ -79,6 +95,7 @@ const args = process.argv.slice(2);
 const result = spawnSync(BIN_NAME, args, { stdio: "inherit", shell: platform() === "win32" });
 
 if (result.error) {
+  process.stderr.write(\`Binary '\${BIN_NAME}' not found. Attempting to install...\\n\`);
   bootstrapBinary();
   const retry = spawnSync(BIN_NAME, args, { stdio: "inherit", shell: platform() === "win32" });
   process.exit(retry.status ?? 1);
@@ -108,20 +125,17 @@ async function main() {
 		const entryPath = join(srcDir, 'cli.ts');
 		await Bun.write(entryPath, Templates.cliWrapper(meta));
 
-		console.log(`📦 Bundling ${meta.name}...`);
+		console.log(`📦 Bundling ${meta.safeName}...`);
 
 		const buildResult = await Bun.build({
 			entrypoints: [entryPath],
 			outdir: binDir,
 			target: 'node',
 			format: 'cjs',
-			naming: `${meta.name}.cjs`,
-			// Optimization flags
+			naming: `${meta.safeName}.cjs`, // Output file is now lowercased
 			minify: true,
 			sourcemap: 'none',
 			banner: '#!/usr/bin/env node',
-			// Future-proofing: Set to true to generate a standalone binary (executables)
-			// Note: compile: true usually requires target: "bun"
 			compile: false,
 		});
 
@@ -136,7 +150,7 @@ async function main() {
 			await Bun.write(join(outDir, 'README.md'), readme);
 		}
 
-		console.log(`✅ Optimized NPM wrapper generated for ${meta.name} v${meta.version}`);
+		console.log(`✅ Optimized NPM wrapper generated: ${meta.safeName} v${meta.version}`);
 	} catch (err) {
 		console.error('Error:', err instanceof Error ? err.message : err);
 		process.exit(1);

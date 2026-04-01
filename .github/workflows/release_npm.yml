@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  # Required for generating the provenance attestation (OIDC)
   id-token: write
 
 jobs:
@@ -28,19 +27,17 @@ jobs:
           bun-version: latest
 
       - name: Setup Node.js
-        # We use Node primarily for the npm publish command and registry auth
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Generate and Build Wrapper
-        # This script now handles: Metadata parsing -> TS generation -> Bun.build (minification)
         run: bun run scripts/release_npm.ts
 
       - name: Publish to npm
-        working-directory: .release/npm
-        run: npm publish --provenance --access public
+        # THE FIX: Point npm to the folder instead of changing directories.
+        # This ensures npm sees the .npmrc auth file in the repository root.
+        run: npm publish .release/npm --provenance --access public
         env:
-          # Note: Even with provenance, npm currently requires a token for the upload
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

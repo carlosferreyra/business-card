@@ -36,25 +36,18 @@ class PackageMetadata:
 
     @property
     def module_name(self) -> str:
-        return self.name.replace("-", "_")
+        return self.name.lower().replace("-", "_")
 
     @property
     def classifiers(self) -> list[str]:
-        """Returns standard PEP 621 classifiers for a Rust CLI wrapper."""
         items = [
             "Programming Language :: Python :: 3",
             "Programming Language :: Python :: 3.12",
             "Programming Language :: Python :: 3 :: Only",
             "Environment :: Console",
-            "Topic :: Software Development :: Build Tools",
             "Intended Audience :: Developers",
         ]
-        # Attempt to map common Rust licenses to classifiers
-        match self.license_id.upper():
-            case "MIT":
-                items.append("License :: OSI Approved :: MIT License")
-            case "APACHE-2.0":
-                items.append("License :: OSI Approved :: Apache Software License")
+        # Remove the License classifier to satisfy PEP 639 / uv warning
         return items
 
     @classmethod
@@ -93,7 +86,7 @@ class Templates:
         description = "{meta.description}"
         readme = "README.md"
         requires-python = ">=3.12"
-        license = {{ text = "{meta.license_id}" }}
+        license = "{meta.license_id}"
         authors = [
             {authors}
         ]
@@ -107,7 +100,6 @@ class Templates:
 
         [project.urls]
         Repository = "{meta.repository}"
-        Homepage = "{meta.repository}"
 
         [build-system]
         requires = ["uv_build>=0.11.2,<0.12.0"]
@@ -159,10 +151,10 @@ def main():
         sys.exit(1)
 
     out_dir = Path(".release/python")
-    pkg_dir = out_dir / meta.module_name
+    # THE FIX: Nested src/module layout
+    pkg_dir = out_dir / "src" / meta.module_name
     pkg_dir.mkdir(parents=True, exist_ok=True)
 
-    # Formatters for the template
     authors_toml = ",\n    ".join(a.to_pep621() for a in meta.authors)
     classifiers_toml = ",\n    ".join(f'"{c}"' for c in meta.classifiers)
 
@@ -177,7 +169,7 @@ def main():
     if (readme := Path("README.md")).exists():
         (out_dir / "README.md").write_text(readme.read_text())
 
-    print(f"✅ Generated {meta.name} v{meta.version} wrapper in .release/python")
+    print(f"✅ Generated {meta.name} in src-layout for uv_build")
 
 
 if __name__ == "__main__":
