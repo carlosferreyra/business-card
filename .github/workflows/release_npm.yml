@@ -7,14 +7,15 @@ on:
 
 permissions:
   contents: read
+  # Required for generating the provenance attestation (OIDC)
   id-token: write
 
 jobs:
   publish-npm:
     name: Build and publish npm wrapper
-    if: >-
-      github.event.workflow_run.conclusion == 'success'
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout released commit
         uses: actions/checkout@v4
@@ -27,20 +28,19 @@ jobs:
           bun-version: latest
 
       - name: Setup Node.js
+        # We use Node primarily for the npm publish command and registry auth
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Generate npm package from Cargo.toml
+      - name: Generate and Build Wrapper
+        # This script now handles: Metadata parsing -> TS generation -> Bun.build (minification)
         run: bun run scripts/release_npm.ts
-
-      - name: Build wrapper with Bun
-        working-directory: .release/npm
-        run: bun run build
 
       - name: Publish to npm
         working-directory: .release/npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance --access public
+        env:
+          # Note: Even with provenance, npm currently requires a token for the upload
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
