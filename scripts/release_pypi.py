@@ -1,0 +1,184 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
+
+import sys
+import textwrap
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Self
+
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
+
+@dataclass(frozen=True)
+class Author:
+    name: str
+    email: str | None = None
+
+    def to_pep621(self) -> str:
+        email_part = f', email = "{self.email}"' if self.email else ""
+        return f'{{ name = "{self.name}"{email_part} }}'
+
+
+@dataclass(frozen=True)
+class PackageMetadata:
+    name: str
+    version: str
+    description: str
+    repository: str
+    license_id: str
+    authors: list[Author] = field(default_factory=list)
+
+    @property
+    def module_name(self) -> str:
+        return self.name.replace("-", "_")
+
+    @property
+    def classifiers(self) -> list[str]:
+        """Returns standard PEP 621 classifiers for a Rust CLI wrapper."""
+        items = [
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.12",
+            "Programming Language :: Python :: 3 :: Only",
+            "Environment :: Console",
+            "Topic :: Software Development :: Build Tools",
+            "Intended Audience :: Developers",
+        ]
+        # Attempt to map common Rust licenses to classifiers
+        match self.license_id.upper():
+            case "MIT":
+                items.append("License :: OSI Approved :: MIT License")
+            case "APACHE-2.0":
+                items.append("License :: OSI Approved :: Apache Software License")
+        return items
+
+    @classmethod
+    def from_cargo(cls, root: Path) -> Self:
+        cargo_path = root / "Cargo.toml"
+        if not cargo_path.exists():
+            raise FileNotFoundError(f"Missing Cargo.toml at {root}")
+
+        data = tomllib.loads(cargo_path.read_text())["package"]
+
+        parsed_authors = []
+        for raw_author in data.get("authors", []):
+            match raw_author.split("<"):
+                case [name, email_raw]:
+                    parsed_authors.append(
+                        Author(name.strip(), email_raw.removesuffix(">").strip())
+                    )
+                case [name]:
+                    parsed_authors.append(Author(name.strip()))
+
+        return cls(
+            name=data["name"],
+            version=data["version"],
+            description=data.get("description", "Rust CLI wrapper"),
+            repository=data.get("repository", ""),
+            license_id=data.get("license", "MIT"),
+            authors=parsed_authors,
+        )
+
+
+class Templates:
+    PYPROJECT = textwrap.dedent("""
+        [project]
+        name = "{meta.name}"
+        version = "{meta.version}"
+        description = "{meta.description}"
+        readme = "README.md"
+        requires-python = ">=3.12"
+        license = {{ text = "{meta.license_id}" }}
+        authors = [
+            {authors}
+        ]
+        dependencies = []
+        classifiers = [
+            {classifiers}
+        ]
+
+        [project.scripts]
+        {meta.name} = "{meta.module_name}:main"
+
+        [project.urls]
+        Repository = "{meta.repository}"
+        Homepage = "{meta.repository}"
+
+        [build-system]
+        requires = ["uv_build>=0.11.2,<0.12.0"]
+        build-backend = "uv_build"
+    """).strip()
+
+    CLI_WRAPPER = textwrap.dedent("""
+        import platform
+        import shutil
+        import subprocess
+        import sys
+
+        def _bootstrap_binary() -> None:
+            tag = "v{meta.version}"
+            base = "{meta.repository}".rstrip("/")
+
+            match platform.system().lower():
+                case "windows":
+                    url = f"{{base}}/releases/download/{{tag}}/{meta.name}-installer.ps1"
+                    cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", f"iwr -useb '{{url}}' | iex"]
+                case _:
+                    url = f"{{base}}/releases/download/{{tag}}/{meta.name}-installer.sh"
+                    cmd = ["sh", "-c", f"curl -LsSf '{{url}}' | sh"]
+
+            subprocess.run(cmd, check=False)
+
+        def main() -> int:
+            if not (exe := shutil.which("{meta.name}")):
+                print("Binary not found. Installing...", file=sys.stderr)
+                _bootstrap_binary()
+                exe = shutil.which("{meta.name}")
+
+            if not exe:
+                print("Failed to install {meta.name}", file=sys.stderr)
+                return 1
+
+            return subprocess.run([exe, *sys.argv[1:]]).returncode
+
+        if __name__ == "__main__":
+            sys.exit(main())
+    """).strip()
+
+
+def main():
+    try:
+        meta = PackageMetadata.from_cargo(Path.cwd())
+    except Exception as e:
+        print(f"FATAL: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    out_dir = Path(".release/python")
+    pkg_dir = out_dir / meta.module_name
+    pkg_dir.mkdir(parents=True, exist_ok=True)
+
+    # Formatters for the template
+    authors_toml = ",\n    ".join(a.to_pep621() for a in meta.authors)
+    classifiers_toml = ",\n    ".join(f'"{c}"' for c in meta.classifiers)
+
+    (out_dir / "pyproject.toml").write_text(
+        Templates.PYPROJECT.format(
+            meta=meta, authors=authors_toml, classifiers=classifiers_toml
+        )
+    )
+
+    (pkg_dir / "__init__.py").write_text(Templates.CLI_WRAPPER.format(meta=meta))
+
+    if (readme := Path("README.md")).exists():
+        (out_dir / "README.md").write_text(readme.read_text())
+
+    print(f"✅ Generated {meta.name} v{meta.version} wrapper in .release/python")
+
+
+if __name__ == "__main__":
+    main()
