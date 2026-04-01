@@ -1,10 +1,9 @@
-use std::fs;
-use std::path::PathBuf;
-
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::{Parser, ValueEnum};
 use inquire::Select;
 use serde::Deserialize;
+
+const CONFIG_JSON: &str = include_str!("../config.json");
 
 #[derive(Parser, Debug)]
 #[command(
@@ -35,6 +34,8 @@ enum LinkTarget {
 struct AppConfig {
     personal_info: PersonalInfo,
     urls: Urls,
+    #[allow(dead_code)]
+    theme: Option<ThemeConfig>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -58,6 +59,24 @@ struct Urls {
     twitter: Option<String>,
 }
 
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ThemeConfig {
+    border_color: String,
+    background_color: String,
+    animation_speed: AnimationSpeed,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AnimationSpeed {
+    fast: u32,
+    medium: u32,
+    slow: u32,
+}
+
 #[derive(Clone)]
 struct MenuItem {
     label: String,
@@ -74,12 +93,13 @@ fn main() {
 fn run() -> Result<()> {
     let cli = Cli::parse();
 
-    if let Some(command) = &cli.command {
-        if command != "carlosferreyra" {
-            return Err(anyhow!(
-                "Unknown command '{command}'. Use 'carlosferreyra' or omit it."
-            ));
-        }
+    // Collapsed: Use '&&' with let-chains (Rust 1.82+)
+    if let Some(command) = &cli.command
+        && command != "carlosferreyra"
+    {
+        return Err(anyhow!(
+            "Unknown command '{command}'. Use 'carlosferreyra' or omit it."
+        ));
     }
 
     let config = load_config()?;
@@ -97,19 +117,8 @@ fn run() -> Result<()> {
 }
 
 fn load_config() -> Result<AppConfig> {
-    let candidates = [PathBuf::from("config.json"), PathBuf::from("./config.json")];
-
-    for path in candidates {
-        if path.exists() {
-            let contents = fs::read_to_string(&path)
-                .with_context(|| format!("Failed to read config file at {}", path.display()))?;
-            let config = serde_json::from_str::<AppConfig>(&contents)
-                .with_context(|| format!("Invalid JSON in {}", path.display()))?;
-            return Ok(config);
-        }
-    }
-
-    Err(anyhow!("Could not locate config.json in current directory"))
+    serde_json::from_str::<AppConfig>(CONFIG_JSON)
+        .context("Failed to parse the embedded configuration.")
 }
 
 fn interactive_menu(config: &AppConfig) -> Result<()> {
@@ -175,11 +184,14 @@ fn render_card(config: &AppConfig) {
     println!("╭───────────────────────────────────────────────────────────────╮");
     println!("│ {}", config.personal_info.name);
     println!("│ {}", config.personal_info.title);
-    if let Some(company) = &config.personal_info.company {
-        if !company.trim().is_empty() {
-            println!("│ Working at {}", company.trim());
-        }
+
+    // Collapsed: Check Option and String content in one go
+    if let Some(company) = &config.personal_info.company
+        && !company.trim().is_empty()
+    {
+        println!("│ Working at {}", company.trim());
     }
+
     println!("│ 📍 {}", config.personal_info.location);
     println!("│ ⚡ Skills: {}", config.personal_info.skills.join(" | "));
 
@@ -189,11 +201,14 @@ fn render_card(config: &AppConfig) {
     if is_configured(&config.urls.linkedin) {
         println!("│ 💼 LinkedIn: {}", display_url(&config.urls.linkedin));
     }
-    if let Some(twitter) = &config.urls.twitter {
-        if is_configured(twitter) {
-            println!("│ 🐦 Twitter:  {}", display_url(twitter));
-        }
+
+    // Collapsed
+    if let Some(twitter) = &config.urls.twitter
+        && is_configured(twitter)
+    {
+        println!("│ 🐦 Twitter:  {}", display_url(twitter));
     }
+
     if is_configured(&config.urls.portfolio) {
         println!("│ 🌐 Website:  {}", display_url(&config.urls.portfolio));
     }
@@ -207,6 +222,7 @@ fn render_card(config: &AppConfig) {
 
 fn display_url(url: &str) -> String {
     url.trim()
+        .trim_start_matches("mailto:")
         .trim_start_matches("https://")
         .trim_start_matches("http://")
         .trim_end_matches('/')
