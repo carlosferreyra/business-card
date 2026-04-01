@@ -93,15 +93,6 @@ fn main() {
 fn run() -> Result<()> {
     let cli = Cli::parse();
 
-    // Collapsed: Use '&&' with let-chains (Rust 1.82+)
-    if let Some(command) = &cli.command
-        && command != "carlosferreyra"
-    {
-        return Err(anyhow!(
-            "Unknown command '{command}'. Use 'carlosferreyra' or omit it."
-        ));
-    }
-
     let config = load_config()?;
 
     if let Some(target) = cli.open {
@@ -185,7 +176,6 @@ fn render_card(config: &AppConfig) {
     println!("│ {}", config.personal_info.name);
     println!("│ {}", config.personal_info.title);
 
-    // Collapsed: Check Option and String content in one go
     if let Some(company) = &config.personal_info.company
         && !company.trim().is_empty()
     {
@@ -202,7 +192,6 @@ fn render_card(config: &AppConfig) {
         println!("│ 💼 LinkedIn: {}", display_url(&config.urls.linkedin));
     }
 
-    // Collapsed
     if let Some(twitter) = &config.urls.twitter
         && is_configured(twitter)
     {

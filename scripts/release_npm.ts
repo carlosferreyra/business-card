@@ -60,7 +60,6 @@ const Templates = {
 		description: meta.description,
 		license: meta.license,
 		type: 'module',
-		// Key and filename are now lowercased to satisfy NPM
 		bin: { [meta.safeName]: `./bin/${meta.safeName}.cjs` },
 		files: ['bin', 'README.md'],
 		repository: { type: 'git', url: meta.repositoryUrl },
@@ -72,9 +71,11 @@ const Templates = {
 	cliWrapper: (meta: PackageMetadata) =>
 		`
 import { spawnSync } from "node:child_process";
-import { platform } from "node:os";
+import { platform, homedir } from "node:os";
+import { join } from "node:path";
+import { existsSync } from "node:fs";
 
-const BIN_NAME = "${meta.rawName}"; // The actual Rust binary name
+const BIN_NAME = "${meta.rawName}";
 const REPOSITORY = "${meta.repository}".replace(/\\/$/, "");
 const VERSION = "${meta.version}";
 
@@ -92,14 +93,27 @@ function bootstrapBinary() {
 }
 
 const args = process.argv.slice(2);
-const result = spawnSync(BIN_NAME, args, { stdio: "inherit", shell: platform() === "win32" });
+const isWin = platform() === "win32";
 
-if (result.error) {
-  process.stderr.write(\`Binary '\${BIN_NAME}' not found. Attempting to install...\\n\`);
+// Define the absolute path where cargo-dist installs the binary.
+// This prevents the wrapper from finding itself in the PATH (recursion).
+const binPath = join(
+  homedir(),
+  ".cargo",
+  "bin",
+  isWin ? \`\${BIN_NAME}.exe\` : BIN_NAME
+);
+
+if (!existsSync(binPath)) {
+  process.stderr.write(\`Binary '\${BIN_NAME}' not found at \${binPath}. Installing...\\n\`);
   bootstrapBinary();
-  const retry = spawnSync(BIN_NAME, args, { stdio: "inherit", shell: platform() === "win32" });
-  process.exit(retry.status ?? 1);
 }
+
+// Always run from the absolute path to bypass the NPM shim
+const result = spawnSync(binPath, args, {
+  stdio: "inherit",
+  shell: isWin
+});
 
 process.exit(result.status ?? 0);
 `.trim(),
@@ -132,7 +146,7 @@ async function main() {
 			outdir: binDir,
 			target: 'node',
 			format: 'cjs',
-			naming: `${meta.safeName}.cjs`, // Output file is now lowercased
+			naming: `${meta.safeName}.cjs`,
 			minify: true,
 			sourcemap: 'none',
 			banner: '#!/usr/bin/env node',

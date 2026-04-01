@@ -47,7 +47,6 @@ class PackageMetadata:
             "Environment :: Console",
             "Intended Audience :: Developers",
         ]
-        # Remove the License classifier to satisfy PEP 639 / uv warning
         return items
 
     @classmethod
@@ -108,9 +107,9 @@ class Templates:
 
     CLI_WRAPPER = textwrap.dedent("""
         import platform
-        import shutil
         import subprocess
         import sys
+        from pathlib import Path
 
         def _bootstrap_binary() -> None:
             tag = "v{meta.version}"
@@ -127,16 +126,24 @@ class Templates:
             subprocess.run(cmd, check=False)
 
         def main() -> int:
-            if not (exe := shutil.which("{meta.name}")):
-                print("Binary not found. Installing...", file=sys.stderr)
+            bin_name = "{meta.name}"
+            if platform.system().lower() == "windows":
+                bin_name += ".exe"
+
+            # Fix: Prioritize the absolute path to avoid self-recursion with the Python shim.
+            # This also solves the "stale PATH" issue after installation.
+            exe = Path.home() / ".cargo" / "bin" / bin_name
+
+            if not exe.exists():
+                print(f"Binary not found at {{exe}}. Attempting to install...", file=sys.stderr)
                 _bootstrap_binary()
-                exe = shutil.which("{meta.name}")
 
-            if not exe:
-                print("Failed to install {meta.name}", file=sys.stderr)
-                return 1
+            if exe.exists():
+                # Use the absolute path explicitly
+                return subprocess.run([str(exe), *sys.argv[1:]]).returncode
 
-            return subprocess.run([exe, *sys.argv[1:]]).returncode
+            print(f"Failed to find or install {{bin_name}} at {{exe}}", file=sys.stderr)
+            return 1
 
         if __name__ == "__main__":
             sys.exit(main())
@@ -151,7 +158,6 @@ def main():
         sys.exit(1)
 
     out_dir = Path(".release/python")
-    # THE FIX: Nested src/module layout
     pkg_dir = out_dir / "src" / meta.module_name
     pkg_dir.mkdir(parents=True, exist_ok=True)
 
