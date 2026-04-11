@@ -14,6 +14,7 @@ jobs:
     name: Build and publish npm wrapper
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    environment: npm
 
     steps:
       - name: Checkout released commit
@@ -30,14 +31,11 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
 
-      - name: Generate and Build Wrapper
+      - name: Generate and build npm wrapper
         run: bun run scripts/release_npm.ts
 
       - name: Publish to npm
-        # THE FIX: Point npm to the folder instead of changing directories.
-        # This ensures npm sees the .npmrc auth file in the repository root.
-        run: npm publish .release/npm --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # npm v11.5.1+ supports OIDC trusted publishing natively — no token needed.
+        # Provenance is included automatically when using OIDC.
+        run: npm publish .release/npm --access public
