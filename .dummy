@@ -6,3 +6,4 @@ perf: reduce startup time by lazy loading config
 test: add unit tests for greeting module
 build: bump bun to latest in CI
 ci: update release workflow to use OIDC
+chore: update dependencies
