@@ -1,2 +1,3 @@
 fix: correct output encoding on windows
 docs: update README usage section
+style: reformat source files
