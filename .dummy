@@ -8,3 +8,4 @@ build: bump bun to latest in CI
 ci: update release workflow to use OIDC
 chore: update dependencies
 feat!: change CLI flag --name to --greeting (BREAKING CHANGE)
+feat(core): add support for multiple output formats
