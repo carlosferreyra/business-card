@@ -46,8 +46,6 @@ business-card/
 ├── Cargo.toml            # Rust package manifest
 ├── Cargo.lock
 ├── config.json           # Centralized configuration
-├── config.schema.json    # JSON Schema validation
-├── CONFIGURATION.md      # Configuration docs
 └── README.md
 ```
 
@@ -59,7 +57,7 @@ The CLI reads settings from root `config.json`:
 - URLs (email, resume, portfolio, github, linkedin, twitter)
 - Theme settings
 
-For full configuration details, see [CONFIGURATION.md](CONFIGURATION.md).
+For full configuration details, see [`config.json`](config.json).
 
 ## Distribution Model
 
