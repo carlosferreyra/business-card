@@ -3,3 +3,4 @@ docs: update README usage section
 style: reformat source files
 refactor: extract greeting logic into helper
 perf: reduce startup time by lazy loading config
+test: add unit tests for greeting module
