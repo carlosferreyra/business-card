@@ -5,9 +5,12 @@ use inquire::Select;
 use qrcode_generator::QrCodeEcc;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::time::Duration;
 
 const RESUME_JSON: &str = include_str!("../resume.json");
 const CLI_LABEL: &str = "cli";
+const RESUME_URL: &str =
+    "https://raw.githubusercontent.com/carlosferreyra/carlosferreyra/main/resume.json";
 
 #[derive(Parser, Debug)]
 #[command(
@@ -142,9 +145,27 @@ fn run() -> Result<()> {
 }
 
 fn load_config() -> Result<AppConfig> {
-    let catalog = serde_json::from_str::<ResumeCatalog>(RESUME_JSON)
-        .context("Failed to parse embedded resume.json")?;
+    let catalog = fetch_resume_catalog()
+        .or_else(|_| serde_json::from_str::<ResumeCatalog>(RESUME_JSON))
+        .context("Failed to load resume data")?;
     AppConfig::from_resume(catalog, CLI_LABEL)
+}
+
+fn fetch_resume_catalog() -> Result<ResumeCatalog> {
+    let client = reqwest::blocking::Client::builder()
+        .user_agent("carlosferreyra-cli")
+        .timeout(Duration::from_millis(1500))
+        .build()
+        .context("Failed to create HTTP client")?;
+
+    client
+        .get(RESUME_URL)
+        .send()
+        .context("Failed to fetch resume data")?
+        .error_for_status()
+        .context("Resume data request failed")?
+        .json::<ResumeCatalog>()
+        .context("Failed to parse fetched resume data")
 }
 
 impl AppConfig {
