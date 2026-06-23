@@ -86,6 +86,12 @@ repository.
 
 ## Release Pipeline
 
+- Before cutting any patch/minor/major release, refresh the embedded offline fallback:
+
+  ```bash
+  uv run scripts/sync_resume.py
+  ```
+
 - `Release` workflow (`.github/workflows/release.yml`) is the source of truth.
 - It runs `cargo release <patch|minor|major> --execute --no-confirm` and publishes to crates.io.
 - It then runs `cargo dist build` using `Cargo.toml` dist settings.
