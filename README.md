@@ -67,6 +67,12 @@ If the fetch fails, times out, or returns invalid data, the CLI falls back to th
 The CLI renders the `profiles.cli` profile plus links, skills, and projects whose `labels` include
 `cli`.
 
+To refresh the embedded fallback snapshot before a future release, run:
+
+```bash
+uv run scripts/sync_resume.py
+```
+
 ## Distribution Model
 
 - **Source code in this repo:** Rust only
