@@ -353,8 +353,6 @@ fn render_card(config: &AppConfig) {
 fn display_url(url: &str) -> String {
     url.trim()
         .replace("mailto:", "")
-        .replace("https://", "")
-        .replace("http://", "")
         .trim_end_matches('/')
         .to_string()
 }
@@ -498,5 +496,21 @@ mod tests {
 
         assert!(github.is_some());
         assert!(hidden.is_none());
+    }
+
+    #[test]
+    fn display_url_keeps_web_url_schemes_clickable() {
+        assert_eq!(
+            display_url("https://github.com/carlosferreyra/"),
+            "https://github.com/carlosferreyra"
+        );
+        assert_eq!(
+            display_url("http://example.com/path/"),
+            "http://example.com/path"
+        );
+        assert_eq!(
+            display_url("mailto:carlos@example.com"),
+            "carlos@example.com"
+        );
     }
 }
