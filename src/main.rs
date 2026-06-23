@@ -4,9 +4,10 @@ use clap::Parser;
 use inquire::Select;
 use qrcode_generator::QrCodeEcc;
 use serde::Deserialize;
-use std::time::Duration;
+use std::collections::HashMap;
 
-const CONFIG_JSON: &str = include_str!("../config.json");
+const RESUME_JSON: &str = include_str!("../resume.json");
+const CLI_LABEL: &str = "cli";
 
 #[derive(Parser, Debug)]
 #[command(
@@ -21,53 +22,91 @@ struct Cli {
 
 // --- Data Structures ---
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug)]
 struct AppConfig {
     personal_info: PersonalInfo,
-    github_username: String,
     links: Vec<LinkConfig>,
+    projects: Vec<ProjectConfig>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 struct LinkConfig {
     id: String,
     label: String,
     url: String,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug)]
 struct PersonalInfo {
     name: String,
     title: String,
-    company: Option<String>,
+    summary: String,
     location: String,
     skills: Vec<String>,
     email: String,
 }
 
 #[derive(Debug, Deserialize)]
-struct GithubSearchResponse {
-    items: Vec<GithubRepo>,
+#[serde(rename_all = "camelCase")]
+struct ResumeCatalog {
+    profiles: HashMap<String, ResumeProfile>,
+    personal_info: ResumePersonalInfo,
+    links: Vec<ResumeLink>,
+    skills: Vec<ResumeSkill>,
+    projects: Vec<ResumeProject>,
 }
 
 #[derive(Debug, Deserialize)]
-struct GithubRepo {
+#[serde(rename_all = "camelCase")]
+struct ResumeProfile {
+    title: String,
+    summary: String,
+    personal_info: Option<ResumePersonalInfoOverride>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ResumePersonalInfo {
     name: String,
-    stargazers_count: u32,
-    language: Option<String>,
-    owner: GithubOwner,
+    email: String,
+    location: String,
 }
 
 #[derive(Debug, Deserialize)]
-struct GithubOwner {
-    login: String,
+#[serde(rename_all = "camelCase")]
+struct ResumePersonalInfoOverride {
+    name: Option<String>,
+    email: Option<String>,
+    location: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
-struct GithubOrg {
-    login: String,
+struct ResumeLink {
+    id: String,
+    label: String,
+    url: String,
+    labels: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ResumeSkill {
+    items: Vec<String>,
+    labels: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ResumeProject {
+    name: String,
+    description: String,
+    url: String,
+    labels: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+struct ProjectConfig {
+    name: String,
+    description: String,
+    url: String,
 }
 
 // --- Main Logic ---
@@ -83,10 +122,6 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
     let config = load_config()?;
 
-    // Fetch orgs first, then fetch all relevant repos
-    let orgs = fetch_user_orgs(&config.github_username);
-    let repos = fetch_portfolio_repos(&config.github_username, &orgs);
-
     if let Some(target_id) = cli.open {
         let link = config
             .links
@@ -98,7 +133,7 @@ fn run() -> Result<()> {
         return Ok(());
     }
 
-    render_card(&config, &repos);
+    render_card(&config);
     println!(
         "👋 Hi! I'm {}, nice to meet you.",
         config.personal_info.name
@@ -107,54 +142,84 @@ fn run() -> Result<()> {
 }
 
 fn load_config() -> Result<AppConfig> {
-    serde_json::from_str::<AppConfig>(CONFIG_JSON).context("Failed to parse embedded config.json")
+    let catalog = serde_json::from_str::<ResumeCatalog>(RESUME_JSON)
+        .context("Failed to parse embedded resume.json")?;
+    AppConfig::from_resume(catalog, CLI_LABEL)
 }
 
-// --- Integration Functions ---
+impl AppConfig {
+    fn from_resume(catalog: ResumeCatalog, label: &str) -> Result<Self> {
+        let profile = catalog
+            .profiles
+            .get(label)
+            .with_context(|| format!("Missing '{}' profile in resume.json", label))?;
 
-fn fetch_user_orgs(username: &str) -> Vec<String> {
-    let client = reqwest::blocking::Client::builder()
-        .user_agent("rust-cli-card")
-        .timeout(Duration::from_secs(2))
-        .build()
-        .unwrap_or_default();
+        let overrides = profile.personal_info.as_ref();
+        let personal_info = PersonalInfo {
+            name: overrides
+                .and_then(|p| p.name.clone())
+                .unwrap_or(catalog.personal_info.name),
+            title: profile.title.clone(),
+            summary: profile.summary.clone(),
+            location: overrides
+                .and_then(|p| p.location.clone())
+                .unwrap_or(catalog.personal_info.location),
+            skills: flatten_labeled_skills(catalog.skills, label),
+            email: overrides
+                .and_then(|p| p.email.clone())
+                .unwrap_or(catalog.personal_info.email),
+        };
 
-    let url = format!("https://api.github.com/users/{}/orgs", username);
+        let links = catalog
+            .links
+            .into_iter()
+            .filter(|link| has_label(&link.labels, label))
+            .map(|link| LinkConfig {
+                id: link.id,
+                label: link.label,
+                url: link.url,
+            })
+            .collect();
 
-    client
-        .get(url)
-        .send()
-        .ok()
-        .and_then(|res| res.json::<Vec<GithubOrg>>().ok())
-        .map(|orgs| orgs.into_iter().map(|o| o.login).collect())
-        .unwrap_or_default()
+        let projects = catalog
+            .projects
+            .into_iter()
+            .filter(|project| has_label(&project.labels, label))
+            .map(|project| ProjectConfig {
+                name: project.name,
+                description: project.description,
+                url: project.url,
+            })
+            .collect();
+
+        Ok(Self {
+            personal_info,
+            links,
+            projects,
+        })
+    }
 }
 
-fn fetch_portfolio_repos(username: &str, orgs: &[String]) -> Vec<GithubRepo> {
-    let client = reqwest::blocking::Client::builder()
-        .user_agent("rust-cli-card")
-        .timeout(Duration::from_secs(3))
-        .build()
-        .unwrap_or_default();
+fn flatten_labeled_skills(skills: Vec<ResumeSkill>, label: &str) -> Vec<String> {
+    let mut flattened = Vec::new();
 
-    // Build the query: topic:portfolio AND (user:me OR org:org1 OR org:org2...)
-    let mut query = format!("topic:portfolio+user:{}", username);
-    for org in orgs {
-        query.push_str(&format!("+org:{}", org));
+    for skill in skills {
+        if !has_label(&skill.labels, label) {
+            continue;
+        }
+
+        for item in skill.items {
+            if !flattened.contains(&item) {
+                flattened.push(item);
+            }
+        }
     }
 
-    let url = format!(
-        "https://api.github.com/search/repositories?q={}&sort=stars&order=desc",
-        query
-    );
+    flattened
+}
 
-    client
-        .get(url)
-        .send()
-        .ok()
-        .and_then(|res| res.json::<GithubSearchResponse>().ok())
-        .map(|search_res| search_res.items)
-        .unwrap_or_default()
+fn has_label(labels: &[String], label: &str) -> bool {
+    labels.iter().any(|candidate| candidate == label)
 }
 
 // --- UI Components ---
@@ -235,37 +300,24 @@ fn interactive_menu(config: &AppConfig) -> Result<()> {
     Ok(())
 }
 
-fn render_card(config: &AppConfig, repos: &[GithubRepo]) {
+fn render_card(config: &AppConfig) {
     println!("\n╭───────────────────────────────────────────────────────────────╮");
     println!("│ {}", config.personal_info.name);
     println!("│ {}", config.personal_info.title);
 
-    if let Some(company) = &config.personal_info.company
-        && !company.trim().is_empty()
-    {
-        println!("│ 🏢 {}", company.trim());
+    println!("│ 📍 {}", config.personal_info.location);
+    println!("│ {}", config.personal_info.summary);
+    if !config.personal_info.skills.is_empty() {
+        println!("│ ⚡ Skills: {}", config.personal_info.skills.join(" | "));
     }
 
-    println!("│ 📍 {}", config.personal_info.location);
-    println!("│ ⚡ Skills: {}", config.personal_info.skills.join(" | "));
-
-    if !repos.is_empty() {
+    if !config.projects.is_empty() {
         println!("├───────────────────────────────────────────────────────────────┤");
-        println!("│ 🚀 PORTFOLIO PROJECTS (GitHub Top Stars):                     │");
-        for repo in repos.iter().take(5) {
-            // Mostramos el nombre del dueño si es una organización
-            let display_name = if repo.owner.login != config.github_username {
-                format!("{}/{}", repo.owner.login, repo.name)
-            } else {
-                repo.name.clone()
-            };
-
-            println!(
-                "│ • {:<25} [⭐ {:>3}] [{:<8}]",
-                display_name,
-                repo.stargazers_count,
-                repo.language.as_deref().unwrap_or("N/A")
-            );
+        println!("│ 🚀 PORTFOLIO PROJECTS:                                       │");
+        for project in config.projects.iter().take(5) {
+            println!("│ • {}", project.name);
+            println!("│   {}", project.description);
+            println!("│   {}", display_url(&project.url));
         }
     }
 
@@ -284,4 +336,146 @@ fn display_url(url: &str) -> String {
         .replace("http://", "")
         .trim_end_matches('/')
         .to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_catalog() -> ResumeCatalog {
+        serde_json::from_str(
+            r#"{
+                "profiles": {
+                    "cli": {
+                        "slug": "cli",
+                        "title": "CLI Engineer",
+                        "summary": "Builds useful command-line tools.",
+                        "personalInfo": {
+                            "location": "United States"
+                        },
+                        "targets": ["business-card"]
+                    },
+                    "default": {
+                        "slug": "default",
+                        "title": "Software Engineer",
+                        "summary": "Default summary.",
+                        "targets": ["pdf"]
+                    }
+                },
+                "personalInfo": {
+                    "name": "Carlos Ferreyra",
+                    "email": "carlos@example.com",
+                    "location": "Argentina"
+                },
+                "githubUsername": "carlosferreyra",
+                "links": [
+                    {
+                        "id": "github",
+                        "label": "GitHub",
+                        "url": "https://github.com/carlosferreyra",
+                        "labels": ["cli"]
+                    },
+                    {
+                        "id": "email",
+                        "label": "Email",
+                        "url": "mailto:carlos@example.com",
+                        "labels": ["default", "cli"]
+                    },
+                    {
+                        "id": "hidden",
+                        "label": "Hidden",
+                        "url": "https://example.com",
+                        "labels": ["default"]
+                    }
+                ],
+                "skills": [
+                    {
+                        "category": "Languages",
+                        "items": ["Rust", "Python"],
+                        "labels": ["cli"]
+                    },
+                    {
+                        "category": "Other",
+                        "items": ["Cooking"],
+                        "labels": ["default"]
+                    },
+                    {
+                        "category": "Automation",
+                        "items": ["Python", "GitHub Actions"],
+                        "labels": ["cli"]
+                    }
+                ],
+                "experience": [],
+                "education": [],
+                "certifications": [],
+                "projects": [
+                    {
+                        "name": "Business Card",
+                        "description": "Interactive CLI card",
+                        "url": "https://github.com/carlosferreyra/business-card",
+                        "labels": ["cli"]
+                    },
+                    {
+                        "name": "Hidden Project",
+                        "description": "Not for CLI",
+                        "url": "https://example.com",
+                        "labels": ["default"]
+                    }
+                ]
+            }"#,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn builds_cli_view_model_from_cli_profile() {
+        let config = AppConfig::from_resume(sample_catalog(), CLI_LABEL).unwrap();
+
+        assert_eq!(config.personal_info.name, "Carlos Ferreyra");
+        assert_eq!(config.personal_info.title, "CLI Engineer");
+        assert_eq!(
+            config.personal_info.summary,
+            "Builds useful command-line tools."
+        );
+        assert_eq!(config.personal_info.location, "United States");
+        assert_eq!(config.personal_info.email, "carlos@example.com");
+    }
+
+    #[test]
+    fn filters_cli_labeled_links_skills_and_projects() {
+        let config = AppConfig::from_resume(sample_catalog(), CLI_LABEL).unwrap();
+
+        assert_eq!(
+            config
+                .links
+                .iter()
+                .map(|link| link.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["github", "email"]
+        );
+        assert!(config.links.iter().all(|link| link.id != "hidden"));
+        assert_eq!(
+            config.personal_info.skills,
+            vec!["Rust", "Python", "GitHub Actions"]
+        );
+        assert_eq!(config.projects.len(), 1);
+        assert_eq!(config.projects[0].name, "Business Card");
+    }
+
+    #[test]
+    fn open_lookup_only_sees_filtered_non_empty_links() {
+        let config = AppConfig::from_resume(sample_catalog(), CLI_LABEL).unwrap();
+
+        let github = config
+            .links
+            .iter()
+            .find(|link| link.id == "github" && !link.url.trim().is_empty());
+        let hidden = config
+            .links
+            .iter()
+            .find(|link| link.id == "hidden" && !link.url.trim().is_empty());
+
+        assert!(github.is_some());
+        assert!(hidden.is_none());
+    }
 }

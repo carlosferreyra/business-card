@@ -8,7 +8,7 @@
 import httpx
 from pathlib import Path
 
-RESUME_URL = "https://raw.githubusercontent.com/carlosferreyra/carlosferreyra/main/data/resume.json"
+RESUME_URL = "https://raw.githubusercontent.com/carlosferreyra/carlosferreyra/main/resume.json"
 DEST = Path(__file__).parent.parent / "resume.json"
 
 
