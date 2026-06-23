@@ -146,7 +146,7 @@ checksum = "8ae3f5d315924270530207e2a68396c3cc547f6dca3fbdca317cfb1a51edb593"
 
 [[package]]
 name = "carlosferreyra"
-version = "1.2.11"
+version = "1.2.12"
 dependencies = [
  "anyhow",
  "arboard",
