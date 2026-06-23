@@ -35,7 +35,7 @@ bunx carlosferreyra
 - 🌐 Portfolio and social links
 - 🖥️ Interactive menu
 - 🔧 Non-interactive mode via `--open`
-- 🎯 Config-driven behavior from a single `config.json`
+- 🎯 Resume-driven behavior from `resume.json` with runtime refresh from GitHub
 
 ## Project Structure
 
@@ -45,19 +45,27 @@ business-card/
 │   └── main.rs
 ├── Cargo.toml            # Rust package manifest
 ├── Cargo.lock
-├── config.json           # Centralized configuration
+├── resume.json           # Embedded fallback resume snapshot
 └── README.md
 ```
 
 ## Configuration
 
-The CLI reads settings from root `config.json`:
+The CLI fetches resume metadata at startup from:
+
+```text
+https://raw.githubusercontent.com/carlosferreyra/carlosferreyra/main/resume.json
+```
+
+If the fetch fails, times out, or returns invalid data, the CLI falls back to the embedded root
+`resume.json` in this repository.
 
 - Personal information (name, title, company, location, skills)
-- URLs (email, resume, portfolio, github, linkedin, twitter)
-- Theme settings
+- Links (email, portfolio, GitHub, LinkedIn, Twitter, LeetCode)
+- CLI-labeled portfolio projects
 
-For full configuration details, see [`config.json`](config.json).
+The CLI renders the `profiles.cli` profile plus links, skills, and projects whose `labels` include
+`cli`.
 
 ## Distribution Model
 
