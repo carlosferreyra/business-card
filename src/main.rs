@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 const RESUME_JSON: &str = include_str!("../resume.json");
-const CLI_LABEL: &str = "cli";
+const PROFILE_LABEL: &str = "business-card";
 const RESUME_URL: &str =
     "https://raw.githubusercontent.com/carlosferreyra/carlosferreyra/main/resume.json";
 
@@ -145,10 +145,17 @@ fn run() -> Result<()> {
 }
 
 fn load_config() -> Result<AppConfig> {
-    let catalog = fetch_resume_catalog()
-        .or_else(|_| serde_json::from_str::<ResumeCatalog>(RESUME_JSON))
-        .context("Failed to load resume data")?;
-    AppConfig::from_resume(catalog, CLI_LABEL)
+    config_with_fallback(fetch_resume_catalog())
+}
+
+fn config_with_fallback(remote: Result<ResumeCatalog>) -> Result<AppConfig> {
+    remote
+        .and_then(|catalog| AppConfig::from_resume(catalog, PROFILE_LABEL))
+        .or_else(|_| {
+            let catalog = serde_json::from_str::<ResumeCatalog>(RESUME_JSON)?;
+            AppConfig::from_resume(catalog, PROFILE_LABEL)
+        })
+        .context("Failed to load resume data")
 }
 
 fn fetch_resume_catalog() -> Result<ResumeCatalog> {
@@ -309,13 +316,17 @@ fn interactive_menu(config: &AppConfig) -> Result<()> {
         }
 
         if selection == "📋 Copy Email" {
-            let _ = copy_to_clipboard(&config.personal_info.email);
+            if let Err(error) = copy_to_clipboard(&config.personal_info.email) {
+                eprintln!("❌ {error:#}");
+            }
         } else if selection == "📱 View QR Code (LinkedIn)" {
             if let Some(li) = config.links.iter().find(|l| l.id == "linkedin") {
                 show_qr(&li.url);
             }
-        } else if let Some(link) = links.iter().find(|l| l.label == selection) {
-            let _ = open::that(&link.url);
+        } else if let Some(link) = links.iter().find(|l| l.label == selection)
+            && let Err(error) = open::that(&link.url)
+        {
+            eprintln!("❌ Failed to open URL: {error}");
         }
     }
     Ok(())
@@ -365,8 +376,8 @@ mod tests {
         serde_json::from_str(
             r#"{
                 "profiles": {
-                    "cli": {
-                        "slug": "cli",
+                    "business-card": {
+                        "slug": "business-card",
                         "title": "CLI Engineer",
                         "summary": "Builds useful command-line tools.",
                         "personalInfo": {
@@ -392,13 +403,13 @@ mod tests {
                         "id": "github",
                         "label": "GitHub",
                         "url": "https://github.com/carlosferreyra",
-                        "labels": ["cli"]
+                        "labels": ["business-card"]
                     },
                     {
                         "id": "email",
                         "label": "Email",
                         "url": "mailto:carlos@example.com",
-                        "labels": ["default", "cli"]
+                        "labels": ["default", "business-card"]
                     },
                     {
                         "id": "hidden",
@@ -411,7 +422,7 @@ mod tests {
                     {
                         "category": "Languages",
                         "items": ["Rust", "Python"],
-                        "labels": ["cli"]
+                        "labels": ["business-card"]
                     },
                     {
                         "category": "Other",
@@ -421,7 +432,7 @@ mod tests {
                     {
                         "category": "Automation",
                         "items": ["Python", "GitHub Actions"],
-                        "labels": ["cli"]
+                        "labels": ["business-card"]
                     }
                 ],
                 "experience": [],
@@ -432,7 +443,7 @@ mod tests {
                         "name": "Business Card",
                         "description": "Interactive CLI card",
                         "url": "https://github.com/carlosferreyra/business-card",
-                        "labels": ["cli"]
+                        "labels": ["business-card"]
                     },
                     {
                         "name": "Hidden Project",
@@ -447,8 +458,8 @@ mod tests {
     }
 
     #[test]
-    fn builds_cli_view_model_from_cli_profile() {
-        let config = AppConfig::from_resume(sample_catalog(), CLI_LABEL).unwrap();
+    fn builds_view_model_from_business_card_profile() {
+        let config = AppConfig::from_resume(sample_catalog(), PROFILE_LABEL).unwrap();
 
         assert_eq!(config.personal_info.name, "Carlos Ferreyra");
         assert_eq!(config.personal_info.title, "CLI Engineer");
@@ -461,8 +472,8 @@ mod tests {
     }
 
     #[test]
-    fn filters_cli_labeled_links_skills_and_projects() {
-        let config = AppConfig::from_resume(sample_catalog(), CLI_LABEL).unwrap();
+    fn filters_business_card_links_skills_and_projects() {
+        let config = AppConfig::from_resume(sample_catalog(), PROFILE_LABEL).unwrap();
 
         assert_eq!(
             config
@@ -483,7 +494,7 @@ mod tests {
 
     #[test]
     fn open_lookup_only_sees_filtered_non_empty_links() {
-        let config = AppConfig::from_resume(sample_catalog(), CLI_LABEL).unwrap();
+        let config = AppConfig::from_resume(sample_catalog(), PROFILE_LABEL).unwrap();
 
         let github = config
             .links
@@ -496,6 +507,21 @@ mod tests {
 
         assert!(github.is_some());
         assert!(hidden.is_none());
+    }
+
+    #[test]
+    fn missing_remote_profile_uses_embedded_snapshot() {
+        let mut catalog = sample_catalog();
+        catalog.profiles.clear();
+        let config = config_with_fallback(Ok(catalog)).unwrap();
+        assert!(!config.personal_info.skills.is_empty());
+        assert_eq!(config.personal_info.name, "Carlos Ferreyra");
+    }
+
+    #[test]
+    fn fetch_failure_uses_embedded_snapshot() {
+        let config = config_with_fallback(Err(anyhow!("Network unavailable"))).unwrap();
+        assert!(!config.personal_info.skills.is_empty());
     }
 
     #[test]

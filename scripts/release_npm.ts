@@ -83,12 +83,15 @@ function bootstrapBinary() {
   const tag = "v" + VERSION;
   const currentPlatform = platform();
 
-  if (currentPlatform === "win32") {
-    const url = \`\${REPOSITORY}/releases/download/\${tag}/\${BIN_NAME}-installer.ps1\`;
-    spawnSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "iwr -useb '" + url + "' | iex"], { stdio: "inherit" });
-  } else {
-    const url = \`\${REPOSITORY}/releases/download/\${tag}/\${BIN_NAME}-installer.sh\`;
-    spawnSync("sh", ["-c", "curl -LsSf '" + url + "' | sh"], { stdio: "inherit" });
+  if (currentPlatform !== "darwin" && currentPlatform !== "linux") {
+    process.stderr.write("Automatic installation is unsupported on " + currentPlatform + ".\\n");
+    process.exit(1);
+  }
+  const url = \`\${REPOSITORY}/releases/download/\${tag}/\${BIN_NAME}-installer.sh\`;
+  const result = spawnSync("bash", ["-o", "pipefail", "-c", "curl -LsSf '" + url + "' | sh"], { stdio: "inherit" });
+  if (result.error || result.status !== 0) {
+    process.stderr.write("Failed to install binary: " + (result.error?.message ?? result.status) + "\\n");
+    process.exit(1);
   }
 }
 
@@ -115,7 +118,10 @@ const result = spawnSync(binPath, args, {
   shell: isWin
 });
 
-process.exit(result.status ?? 0);
+if (result.error) {
+  process.stderr.write("Failed to launch binary: " + result.error.message + "\\n");
+}
+process.exit(result.status ?? 1);
 `.trim(),
 };
 

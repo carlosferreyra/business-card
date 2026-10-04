@@ -62,10 +62,10 @@ If the fetch fails, times out, or returns invalid data, the CLI falls back to th
 
 - Personal information (name, title, company, location, skills)
 - Links (email, portfolio, GitHub, LinkedIn, Twitter, LeetCode)
-- CLI-labeled portfolio projects
+- Business-card-labeled portfolio projects
 
-The CLI renders the `profiles.cli` profile plus links, skills, and projects whose `labels` include
-`cli`.
+The CLI renders the `profiles.business-card` profile plus links, skills, and projects whose labels
+include `business-card`.
 
 To refresh the embedded fallback snapshot before a future release, run:
 
@@ -93,9 +93,12 @@ repository.
   ```
 
 - `Release` workflow (`.github/workflows/release.yml`) is the source of truth.
-- It runs `cargo release <patch|minor|major> --execute --no-confirm` and publishes to crates.io.
-- It then runs `cargo dist build` using `Cargo.toml` dist settings.
-- On successful completion, `release_pypi.yml` and `release_npm.yml` run automatically.
+- It runs on version-tag pushes and pull requests; pull requests run distribution planning only.
+- Version-tag pushes build binaries and installers with `dist`, then publish a GitHub release.
+- Version bumps, tag creation, and crates.io publication are separate maintainer steps.
+- After a successful release push, `release_pypi.yml` and `release_npm.yml` verify that the
+  matching GitHub release and installer exist and that its tag points to the checked-out commit,
+  then publish the wrappers.
 - Those workflows generate Python/npm wrapper package metadata from `Cargo.toml` on the fly (no
   dedicated `python/` or `typescript/` source folders).
 
@@ -106,6 +109,10 @@ cargo run
 cargo run -- --open portfolio
 cargo check
 cargo build --release
+cargo test --locked
+cargo clippy --locked --all-targets -- -D warnings
+uv run --with httpx python -m unittest discover -s tests -v
+node --test tests/npm_wrapper.test.cjs
 ```
 
 ## Connect with Carlos
@@ -134,3 +141,6 @@ If the binary is not available, wrappers attempt to bootstrap it from release ar
 ```bash
 cargo install carlosferreyra
 ```
+
+Automatic wrapper installation supports macOS and Linux. Windows users must provide a separately
+built Rust executable; published releases currently contain no Windows binaries.

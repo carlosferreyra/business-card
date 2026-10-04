@@ -115,15 +115,11 @@ class Templates:
             tag = "v{meta.version}"
             base = "{meta.repository}".rstrip("/")
 
-            match platform.system().lower():
-                case "windows":
-                    url = f"{{base}}/releases/download/{{tag}}/{meta.name}-installer.ps1"
-                    cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", f"iwr -useb '{{url}}' | iex"]
-                case _:
-                    url = f"{{base}}/releases/download/{{tag}}/{meta.name}-installer.sh"
-                    cmd = ["sh", "-c", f"curl -LsSf '{{url}}' | sh"]
-
-            subprocess.run(cmd, check=False)
+            if platform.system().lower() not in ("darwin", "linux"):
+                raise RuntimeError("Automatic installation is supported only on macOS and Linux")
+            url = f"{{base}}/releases/download/{{tag}}/{meta.name}-installer.sh"
+            cmd = ["bash", "-o", "pipefail", "-c", f"curl -LsSf '{{url}}' | sh"]
+            subprocess.run(cmd, check=True)
 
         def main() -> int:
             bin_name = "{meta.name}"
@@ -136,7 +132,11 @@ class Templates:
 
             if not exe.exists():
                 print(f"Binary not found at {{exe}}. Attempting to install...", file=sys.stderr)
-                _bootstrap_binary()
+                try:
+                    _bootstrap_binary()
+                except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
+                    print(f"Failed to install binary: {{error}}", file=sys.stderr)
+                    return 1
 
             if exe.exists():
                 # Use the absolute path explicitly
