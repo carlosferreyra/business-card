@@ -107,19 +107,29 @@ class Templates:
 
     CLI_WRAPPER = textwrap.dedent("""
         import platform
+        import re
         import subprocess
         import sys
         from pathlib import Path
 
         def _bootstrap_binary() -> None:
-            tag = "v{meta.version}"
             base = "{meta.repository}".rstrip("/")
 
             if platform.system().lower() not in ("darwin", "linux"):
                 raise RuntimeError("Automatic installation is supported only on macOS and Linux")
-            url = f"{{base}}/releases/download/{{tag}}/{meta.name}-installer.sh"
+            url = f"{{base}}/releases/latest/download/{meta.name}-installer.sh"
             cmd = ["bash", "-o", "pipefail", "-c", f"curl -LsSf '{{url}}' | sh"]
-            subprocess.run(cmd, check=True)
+            subprocess.run(cmd, check=True, stdout=sys.stderr)
+
+        def _has_updater(exe: Path) -> bool:
+            if not exe.exists():
+                return False
+            try:
+                result = subprocess.run([str(exe), "--version", "--__business-card-update-restarted"], capture_output=True, text=True, timeout=5)
+                match = re.fullmatch(r"{meta.name} ([0-9]+)[.]([0-9]+)[.]([0-9]+)", result.stdout.strip())
+                return result.returncode == 0 and match is not None and tuple(map(int, match.groups())) >= (1, 2, 17)
+            except (OSError, subprocess.TimeoutExpired):
+                return False
 
         def main() -> int:
             bin_name = "{meta.name}"
@@ -130,13 +140,15 @@ class Templates:
             # This also solves the "stale PATH" issue after installation.
             exe = Path.home() / ".cargo" / "bin" / bin_name
 
-            if not exe.exists():
-                print(f"Binary not found at {{exe}}. Attempting to install...", file=sys.stderr)
+            if not _has_updater(exe):
+                print("Installing the latest business card...", file=sys.stderr)
                 try:
                     _bootstrap_binary()
                 except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
                     print(f"Failed to install binary: {{error}}", file=sys.stderr)
-                    return 1
+                    if not exe.exists():
+                        return 1
+                    print("Continuing with the installed card.", file=sys.stderr)
 
             if exe.exists():
                 # Use the absolute path explicitly

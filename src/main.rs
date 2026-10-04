@@ -7,6 +7,8 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::time::Duration;
 
+mod updater;
+
 const RESUME_JSON: &str = include_str!("../resume.json");
 const PROFILE_LABEL: &str = "business-card";
 const RESUME_URL: &str =
@@ -115,14 +117,16 @@ struct ProjectConfig {
 // --- Main Logic ---
 
 fn main() {
-    if let Err(error) = run() {
+    let mut args = std::env::args_os().collect();
+    updater::check_and_restart(&mut args);
+    if let Err(error) = run(args) {
         eprintln!("❌ {error}");
         std::process::exit(1);
     }
 }
 
-fn run() -> Result<()> {
-    let cli = Cli::parse();
+fn run(args: Vec<std::ffi::OsString>) -> Result<()> {
+    let cli = Cli::parse_from(args);
     let config = load_config()?;
 
     if let Some(target_id) = cli.open {

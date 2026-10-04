@@ -77,22 +77,21 @@ import { existsSync } from "node:fs";
 
 const BIN_NAME = "${meta.rawName}";
 const REPOSITORY = "${meta.repository}".replace(/\\/$/, "");
-const VERSION = "${meta.version}";
 
 function bootstrapBinary() {
-  const tag = "v" + VERSION;
   const currentPlatform = platform();
 
   if (currentPlatform !== "darwin" && currentPlatform !== "linux") {
     process.stderr.write("Automatic installation is unsupported on " + currentPlatform + ".\\n");
-    process.exit(1);
+    return false;
   }
-  const url = \`\${REPOSITORY}/releases/download/\${tag}/\${BIN_NAME}-installer.sh\`;
-  const result = spawnSync("bash", ["-o", "pipefail", "-c", "curl -LsSf '" + url + "' | sh"], { stdio: "inherit" });
+  const url = \`\${REPOSITORY}/releases/latest/download/\${BIN_NAME}-installer.sh\`;
+  const result = spawnSync("bash", ["-o", "pipefail", "-c", "curl -LsSf '" + url + "' | sh"], { stdio: ["inherit", 2, 2] });
   if (result.error || result.status !== 0) {
     process.stderr.write("Failed to install binary: " + (result.error?.message ?? result.status) + "\\n");
-    process.exit(1);
+    return false;
   }
+  return true;
 }
 
 const args = process.argv.slice(2);
@@ -107,9 +106,26 @@ const binPath = join(
   isWin ? \`\${BIN_NAME}.exe\` : BIN_NAME
 );
 
-if (!existsSync(binPath)) {
-  process.stderr.write(\`Binary '\${BIN_NAME}' not found at \${binPath}. Installing...\\n\`);
-  bootstrapBinary();
+function hasUpdater() {
+  if (!existsSync(binPath)) return false;
+  const result = spawnSync(binPath, ["--version", "--__business-card-update-restarted"], { encoding: "utf8", timeout: 5000 });
+  if (result.error || result.status !== 0) return false;
+  const match = result.stdout.trim().match(/^carlosferreyra (\\d+)\\.(\\d+)\\.(\\d+)$/);
+  if (!match) return false;
+  const version = match.slice(1).map(Number);
+  const minimum = [1, 2, 17];
+  for (let i = 0; i < minimum.length; i++) {
+    if (version[i] !== minimum[i]) return version[i] > minimum[i];
+  }
+  return true;
+}
+
+if (!hasUpdater()) {
+  process.stderr.write("Installing the latest business card...\\n");
+  if (!bootstrapBinary()) {
+    if (!existsSync(binPath)) process.exit(1);
+    process.stderr.write("Continuing with the installed card.\\n");
+  }
 }
 
 // Always run from the absolute path to bypass the NPM shim

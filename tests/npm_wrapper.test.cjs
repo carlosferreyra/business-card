@@ -8,6 +8,7 @@ const vm = require('node:vm');
 
 const directory = mkdtempSync(join(tmpdir(), 'business-card-test-'));
 let source;
+const matching = { status: 0, stdout: `carlosferreyra 1.2.17\n` };
 try {
   copyFileSync(resolve('Cargo.toml'), join(directory, 'Cargo.toml'));
   execFileSync('bun', [resolve('scripts/release_npm.ts')], { cwd: directory });
@@ -39,7 +40,7 @@ function runWrapper({ platform = 'linux', exists = true, results = [] } = {}) {
 }
 
 test('launch error returns nonzero and explains failure', () => {
-  const result = runWrapper({ results: [{ status: null, error: new Error('ENOENT') }] });
+  const result = runWrapper({ results: [matching, { status: null, error: new Error('ENOENT') }] });
   assert.equal(result.exit, 1);
   assert.match(result.output, /Failed to launch binary.*ENOENT/);
 });
@@ -59,7 +60,30 @@ test('installer failure stops binary launch', () => {
 });
 
 test('arguments and binary exit code are forwarded', () => {
-  const result = runWrapper({ results: [{ status: 7 }] });
+  const result = runWrapper({ results: [matching, { status: 7 }] });
   assert.equal(result.exit, 7);
-  assert.deepEqual(Array.from(result.calls[0][1]), ['--version']);
+  assert.deepEqual(Array.from(result.calls[0][1]), ['--version', '--__business-card-update-restarted']);
+  assert.deepEqual(Array.from(result.calls[1][1]), ['--version']);
+});
+
+
+test('outdated binary is automatically replaced before launching', () => {
+  const result = runWrapper({ results: [{ status: 0, stdout: 'carlosferreyra 1.2.14\n' }, { status: 0 }, { status: 0 }] });
+  assert.equal(result.exit, 0);
+  assert.equal(result.calls[1][0], 'bash');
+  assert.equal(result.calls.length, 3);
+});
+
+test('newer binary is retained even with an older wrapper', () => {
+  const result = runWrapper({ results: [{ status: 0, stdout: 'carlosferreyra 2.0.0\n' }, { status: 0 }] });
+  assert.equal(result.exit, 0);
+  assert.equal(result.calls.length, 2);
+  assert.equal(result.calls[1][0], '/mock-home/.cargo/bin/carlosferreyra');
+});
+
+
+test('failed migration still runs an existing presentation card', () => {
+  const result = runWrapper({ results: [{ status: 0, stdout: 'carlosferreyra 1.2.14\n' }, { status: 22 }, { status: 0 }] });
+  assert.equal(result.exit, 0);
+  assert.match(result.output, /Continuing with the installed card/);
 });

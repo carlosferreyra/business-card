@@ -65,9 +65,43 @@ class ScriptTests(unittest.TestCase):
     def test_python_forwards_arguments_and_exit_code(self):
         wrapper = self.wrapper()
         with patch("pathlib.Path.exists", return_value=True), patch("sys.argv", ["wrapper", "--version"]), patch("subprocess.run") as run:
-            run.return_value.returncode = 7
+            run.side_effect = [
+                subprocess.CompletedProcess([], 0, "carlosferreyra 1.2.17\n"),
+                subprocess.CompletedProcess([], 7),
+            ]
             self.assertEqual(wrapper["main"](), 7)
             self.assertEqual(run.call_args.args[0][1:], ["--version"])
+
+    def test_python_updates_outdated_binary(self):
+        wrapper = self.wrapper()
+        with patch("pathlib.Path.exists", return_value=True), patch("subprocess.run") as run:
+            run.side_effect = [
+                subprocess.CompletedProcess([], 0, "carlosferreyra 1.2.14\n"),
+                subprocess.CompletedProcess([], 0),
+                subprocess.CompletedProcess([], 0),
+            ]
+            self.assertEqual(wrapper["main"](), 0)
+            self.assertEqual(run.call_args_list[1].args[0][0], "bash")
+
+    def test_python_failed_migration_keeps_existing_card_usable(self):
+        wrapper = self.wrapper()
+        with patch("pathlib.Path.exists", return_value=True), patch("subprocess.run") as run:
+            run.side_effect = [
+                subprocess.CompletedProcess([], 0, "carlosferreyra 1.2.14\n"),
+                subprocess.CalledProcessError(22, "curl"),
+                subprocess.CompletedProcess([], 0),
+            ]
+            self.assertEqual(wrapper["main"](), 0)
+
+    def test_python_retains_newer_binary_without_downloading(self):
+        wrapper = self.wrapper()
+        with patch("pathlib.Path.exists", return_value=True), patch("subprocess.run") as run:
+            run.side_effect = [
+                subprocess.CompletedProcess([], 0, "carlosferreyra 2.0.0\n"),
+                subprocess.CompletedProcess([], 0),
+            ]
+            self.assertEqual(wrapper["main"](), 0)
+            self.assertEqual(run.call_count, 2)
 
     def test_release_guard_accepts_matching_commit(self):
         package = release.PackageMetadata.from_cargo(ROOT)
