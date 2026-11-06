@@ -2,7 +2,7 @@ use anyhow::{Context, Result, anyhow};
 use arboard::Clipboard;
 use clap::Parser;
 use inquire::Select;
-use qrcode_generator::QrCodeEcc;
+use qrcode_generator::qr::{Encoder, ErrorCorrection};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::time::Duration;
@@ -258,7 +258,8 @@ fn has_label(labels: &[String], label: &str) -> bool {
 
 fn show_qr(url: &str) {
     println!("\n📱 Scan to open on your mobile:");
-    if let Ok(matrix) = qrcode_generator::to_matrix(url, QrCodeEcc::Low) {
+    if let Ok(symbol) = Encoder::new(ErrorCorrection::Low).encode_text(url) {
+        let matrix = symbol.to_matrix();
         let margin = "  ";
         for i in (0..matrix.len()).step_by(2) {
             let mut line = String::from(margin);
